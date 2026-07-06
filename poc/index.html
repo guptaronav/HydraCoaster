@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HydraCoaster · live</title>
+<style>
+  :root {
+    --bg:        oklch(21% 0.03 240);
+    --bg-2:      oklch(26% 0.04 240);
+    --surface:   oklch(30% 0.045 240 / 0.72);
+    --stroke:    oklch(100% 0 0 / 0.09);
+    --text:      oklch(97% 0.01 240);
+    --muted:     oklch(72% 0.03 240);
+    --accent:    oklch(74% 0.15 210);
+    --accent-2:  oklch(80% 0.16 190);
+    --good:      oklch(80% 0.17 155);
+    --warn:      oklch(78% 0.16 70);
+    --danger:    oklch(70% 0.19 20);
+    --radius:    18px;
+    --shadow:    0 20px 50px -20px oklch(0% 0 0 / 0.6);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, oklch(40% 0.08 200 / 0.4), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, oklch(38% 0.09 250 / 0.35), transparent 55%),
+      linear-gradient(160deg, var(--bg), var(--bg-2));
+    background-attachment: fixed;
+    padding: clamp(1rem, 2vw, 2.5rem);
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: baseline; gap: .6rem; }
+  .brand h1 {
+    font-size: clamp(1.3rem, 1rem + 1.4vw, 2rem); margin: 0; letter-spacing: -0.02em;
+    font-weight: 680;
+  }
+  .brand .drop { font-size: 1.6em; line-height: 0; transform: translateY(3px); }
+  .brand span.sub { color: var(--muted); font-size: .85rem; font-weight: 500; }
+  .conn {
+    display: inline-flex; align-items: center; gap: .5rem; font-size: .82rem;
+    color: var(--muted); background: var(--surface); border: 1px solid var(--stroke);
+    padding: .5rem .85rem; border-radius: 999px; backdrop-filter: blur(12px);
+  }
+  .dot { width: .6rem; height: .6rem; border-radius: 50%; background: var(--danger);
+         box-shadow: 0 0 0 0 currentColor; }
+  .dot.live { background: var(--good); animation: pulse 2s infinite; }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 oklch(80% 0.17 155 / 0.5); }
+    70%  { box-shadow: 0 0 0 8px oklch(80% 0.17 155 / 0); }
+    100% { box-shadow: 0 0 0 0 oklch(80% 0.17 155 / 0); }
+  }
+
+  .grid {
+    display: grid; gap: clamp(.9rem, 1.5vw, 1.4rem);
+    grid-template-columns: repeat(12, 1fr);
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--stroke);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    backdrop-filter: blur(16px); padding: clamp(1.1rem, 2vw, 1.6rem);
+  }
+  .card h2 {
+    margin: 0 0 .2rem; font-size: .78rem; text-transform: uppercase;
+    letter-spacing: .12em; color: var(--muted); font-weight: 620;
+  }
+
+  .weight  { grid-column: span 5; display: flex; flex-direction: column; }
+  .session { grid-column: span 7; }
+  .chart   { grid-column: span 12; }
+  .controls{ grid-column: span 5; }
+  .log     { grid-column: span 7; }
+  @media (max-width: 820px) {
+    .weight, .session, .chart, .controls, .log { grid-column: span 12; }
+  }
+
+  .readout { display: flex; align-items: baseline; gap: .4rem; margin-top: auto; }
+  .readout .val {
+    font-size: clamp(3.2rem, 2rem + 9vw, 6rem); font-weight: 720;
+    line-height: .95; letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, var(--text), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .readout .unit { font-size: 1.4rem; color: var(--muted); font-weight: 600; }
+  .stability {
+    margin-top: .9rem; display: inline-flex; align-items: center; gap: .5rem;
+    font-size: .82rem; padding: .35rem .7rem; border-radius: 999px;
+    border: 1px solid var(--stroke); width: fit-content;
+  }
+  .stability.settled { color: var(--good); border-color: oklch(80% 0.17 155 / 0.35); }
+  .stability.moving  { color: var(--warn); border-color: oklch(78% 0.16 70 / 0.35); }
+  .stability .tag { font-weight: 640; }
+
+  .consumed {
+    display: flex; align-items: baseline; gap: .5rem; margin: .3rem 0 1rem;
+  }
+  .consumed .big {
+    font-size: clamp(2.6rem, 1.6rem + 6vw, 4.2rem); font-weight: 720;
+    letter-spacing: -0.03em; font-variant-numeric: tabular-nums; color: var(--accent-2);
+  }
+  .consumed .unit { color: var(--muted); font-size: 1.1rem; }
+  .sess-meta { display: flex; gap: 1.4rem; color: var(--muted); font-size: .85rem;
+               margin-bottom: 1.1rem; flex-wrap: wrap; }
+  .sess-meta b { color: var(--text); font-weight: 620; font-variant-numeric: tabular-nums; }
+
+  .btn {
+    appearance: none; border: 1px solid var(--stroke); cursor: pointer;
+    font: inherit; font-weight: 600; color: var(--text);
+    background: oklch(100% 0 0 / 0.05); padding: .7rem 1.1rem; border-radius: 12px;
+    transition: transform .12s ease, background .2s ease, border-color .2s ease;
+  }
+  .btn:hover  { background: oklch(100% 0 0 / 0.1); transform: translateY(-1px); }
+  .btn:active { transform: translateY(0) scale(.98); }
+  .btn.primary {
+    background: linear-gradient(180deg, var(--accent), oklch(64% 0.15 220));
+    border-color: transparent; color: oklch(18% 0.03 240);
+  }
+  .btn.danger { color: var(--danger); border-color: oklch(70% 0.19 20 / 0.4); }
+  .btn-row { display: flex; gap: .6rem; flex-wrap: wrap; }
+  .btn-row.controls-row { margin-top: .3rem; }
+  .hint { color: var(--muted); font-size: .78rem; margin-top: .8rem; line-height: 1.5; }
+
+  canvas { width: 100%; height: 180px; display: block; border-radius: 10px; }
+
+  .log ul { list-style: none; margin: .6rem 0 0; padding: 0;
+            display: flex; flex-direction: column; gap: .4rem; }
+  .log li {
+    display: flex; justify-content: space-between; align-items: center;
+    background: oklch(100% 0 0 / 0.04); border: 1px solid var(--stroke);
+    padding: .55rem .8rem; border-radius: 10px; font-size: .88rem;
+  }
+  .log li .amt { font-weight: 680; color: var(--accent-2);
+                 font-variant-numeric: tabular-nums; }
+  .log li .meta { color: var(--muted); font-size: .78rem; }
+  .log .empty { color: var(--muted); font-size: .85rem; padding: .3rem 0; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="drop">💧</span>
+      <h1>HydraCoaster</h1>
+      <span class="sub">live proof-of-concept</span>
+    </div>
+    <div class="conn"><span class="dot" id="dot"></span><span id="conn-text">connecting…</span></div>
+  </header>
+
+  <div class="grid">
+    <!-- Live weight -->
+    <section class="card weight">
+      <h2>Live weight</h2>
+      <div class="readout"><span class="val" id="grams">–</span><span class="unit">g</span></div>
+      <div class="stability moving" id="stability">
+        <span class="tag" id="stab-tag">settling</span>
+        <span id="stab-detail">± – g</span>
+      </div>
+    </section>
+
+    <!-- Drinking session -->
+    <section class="card session">
+      <h2>Drinking session</h2>
+      <div class="consumed">
+        <span class="big" id="consumed">0</span>
+        <span class="unit">mL consumed</span>
+      </div>
+      <div class="sess-meta">
+        <span>Start&nbsp;<b id="start-g">– g</b></span>
+        <span>In cup now&nbsp;<b id="cup-now">– g</b></span>
+        <span>Elapsed&nbsp;<b id="elapsed">0:00</b></span>
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" id="sess-btn">Start session</button>
+      </div>
+      <p class="hint">Start with a full cup settled on the coaster. Sip and set it
+        back down — consumed updates once the weight settles again.</p>
+    </section>
+
+    <!-- Chart -->
+    <section class="card chart">
+      <h2>Weight · last 60 s</h2>
+      <canvas id="chart" width="1200" height="360"></canvas>
+    </section>
+
+    <!-- Controls -->
+    <section class="card controls">
+      <h2>Calibration</h2>
+      <div class="btn-row controls-row">
+        <button class="btn" id="tare-btn">Tare (empty)</button>
+        <button class="btn" id="cal-btn">Calibrate 200 g</button>
+      </div>
+      <p class="hint">Tare with nothing on the coaster. Then place a known 200 g
+        mass and calibrate. Values persist on the device.</p>
+    </section>
+
+    <!-- Session log -->
+    <section class="card log">
+      <h2>Session history</h2>
+      <ul id="log"><li class="empty">No sessions logged yet.</li></ul>
+    </section>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+
+  // ── live chart buffer ─────────────────────────────────────────────────────
+  const MAXPTS = 400;
+  const buf = [];               // {t, g, stable}
+  const canvas = $("chart");
+  const ctx = canvas.getContext("2d");
+
+  function drawChart() {
+    const w = canvas.width, h = canvas.height, pad = 28;
+    ctx.clearRect(0, 0, w, h);
+    if (buf.length < 2) { requestAnimationFrame(drawChart); return; }
+
+    const now = Date.now();
+    const tMin = now - 60000;
+    const pts = buf.filter(p => p.t >= tMin);
+    let lo = Math.min(...pts.map(p => p.g));
+    let hi = Math.max(...pts.map(p => p.g));
+    if (hi - lo < 20) { const m = (hi + lo) / 2; lo = m - 10; hi = m + 10; }
+    const padR = (hi - lo) * 0.15; lo -= padR; hi += padR;
+
+    const X = (t) => pad + (w - pad * 2) * (t - tMin) / 60000;
+    const Y = (g) => (h - pad) - (h - pad * 2) * (g - lo) / (hi - lo);
+
+    // gridlines
+    ctx.strokeStyle = "rgba(255,255,255,0.07)"; ctx.lineWidth = 1;
+    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    ctx.font = "20px ui-sans-serif, system-ui";
+    for (let i = 0; i <= 3; i++) {
+      const g = lo + (hi - lo) * i / 3, y = Y(g);
+      ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(w - pad, y); ctx.stroke();
+      ctx.fillText(g.toFixed(0) + " g", 4, y - 4);
+    }
+
+    // area + line
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, "rgba(120,200,255,0.35)");
+    grad.addColorStop(1, "rgba(120,200,255,0)");
+    ctx.beginPath();
+    pts.forEach((p, i) => { const x = X(p.t), y = Y(p.g);
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    ctx.lineTo(X(pts[pts.length - 1].t), h - pad);
+    ctx.lineTo(X(pts[0].t), h - pad);
+    ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+
+    ctx.beginPath();
+    pts.forEach((p, i) => { const x = X(p.t), y = Y(p.g);
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    ctx.strokeStyle = "rgba(150,220,255,0.95)"; ctx.lineWidth = 2.5;
+    ctx.lineJoin = "round"; ctx.stroke();
+
+    // head dot
+    const last = pts[pts.length - 1];
+    ctx.beginPath(); ctx.arc(X(last.t), Y(last.g), 4.5, 0, Math.PI * 2);
+    ctx.fillStyle = last.stable ? "#7fe3a1" : "#ffcf6b"; ctx.fill();
+
+    requestAnimationFrame(drawChart);
+  }
+  requestAnimationFrame(drawChart);
+
+  // ── format helpers ────────────────────────────────────────────────────────
+  const fmtDur = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+
+  // ── SSE stream ────────────────────────────────────────────────────────────
+  let sessionActive = false;
+  const es = new EventSource("/events");
+  es.onmessage = (e) => {
+    const d = JSON.parse(e.data);
+
+    $("dot").className = "dot" + (d.connected ? " live" : "");
+    $("conn-text").textContent = d.connected ? ("device " + (d.port || "").split("/").pop()) : "no device";
+
+    $("grams").textContent = d.grams.toFixed(1);
+    const stab = $("stability");
+    if (d.stable) { stab.className = "stability settled";
+      $("stab-tag").textContent = "settled"; }
+    else { stab.className = "stability moving";
+      $("stab-tag").textContent = "settling"; }
+    $("stab-detail").textContent = "± " + d.stddev.toFixed(1) + " g";
+
+    // session
+    const s = d.session;
+    sessionActive = s.active;
+    $("sess-btn").textContent = s.active ? "End session" : "Start session";
+    $("sess-btn").className = "btn " + (s.active ? "danger" : "primary");
+    $("consumed").textContent = s.consumed_g.toFixed(0);
+    $("start-g").textContent = (s.active ? s.start_g.toFixed(0) : "–") + " g";
+    $("cup-now").textContent = d.cup_present ? d.grams.toFixed(0) + " g" : "– g";
+    $("elapsed").textContent = fmtDur(s.duration_s);
+
+    // log
+    const ul = $("log");
+    if (s.log.length === 0) {
+      ul.innerHTML = '<li class="empty">No sessions logged yet.</li>';
+    } else {
+      ul.innerHTML = s.log.map(x =>
+        `<li><span class="amt">${x.consumed_g.toFixed(0)} mL</span>
+             <span class="meta">${x.when} · ${fmtDur(x.duration_s)} · from ${x.start_g.toFixed(0)} g</span></li>`
+      ).join("");
+    }
+
+    // chart
+    buf.push({ t: Date.now(), g: d.grams, stable: d.stable });
+    if (buf.length > MAXPTS) buf.shift();
+  };
+
+  // ── buttons ───────────────────────────────────────────────────────────────
+  const post = (url) => fetch(url).catch(() => {});
+  $("sess-btn").onclick = () =>
+    post(sessionActive ? "/api/session/end" : "/api/session/start");
+  $("tare-btn").onclick = () => post("/api/tare");
+  $("cal-btn").onclick  = () => post("/api/calibrate");
+</script>
+</body>
+</html>
