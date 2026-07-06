@@ -150,7 +150,7 @@ static bool fetchWeather() {
 
 void setup() {
     Serial.begin(115200);
-    delay(500); // let USB-CDC enumerate on first boot
+    delay(3000); // USB-CDC window: keeps port alive for esptool 1200bps touch
 
     ++rtcBootCount;
     analogReadResolution(12); // 0–4 095
