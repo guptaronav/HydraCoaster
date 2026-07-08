@@ -28,9 +28,7 @@ struct HydraCoasterApp: App {
 
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
-                TodayView(client: client, syncEngine: syncEngine)
-            }
+            RootView(client: client, syncEngine: syncEngine)
         }
         .modelContainer(modelContainer)
     }

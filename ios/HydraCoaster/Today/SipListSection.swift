@@ -1,18 +1,22 @@
 import SwiftUI
 
-/// Today's sips, most recent first. Estimated timestamps (coaster couldn't
-/// recover a real clock reading) get a quiet "~" rather than a badge.
+/// Sips for a day, most recent first. Estimated timestamps (coaster
+/// couldn't recover a real clock reading) get a quiet "~" rather than a
+/// badge. Defaults match TodayView's original copy; History passes its own
+/// title/empty text for whichever day is selected.
 struct SipListSection: View {
     let sips: [SipEvent]
+    var title: String = "Today's sips"
+    var emptyText: String = "No sips yet today — take one and it'll show up here."
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Today's sips")
+            Text(title)
                 .font(.headline)
                 .padding(.horizontal, 4)
 
             if sips.isEmpty {
-                Text("No sips yet today — take one and it'll show up here.")
+                Text(emptyText)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 4)
