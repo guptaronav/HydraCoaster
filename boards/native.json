@@ -1,0 +1,9 @@
+{
+  "name": "PlatformIO Native (host compiler, for native unit tests only)",
+  "url": "https://docs.platformio.org/en/latest/platforms/native.html",
+  "vendor": "PlatformIO",
+  "upload": {
+    "maximum_ram_size": 4294967295,
+    "maximum_size": 4294967295
+  }
+}
