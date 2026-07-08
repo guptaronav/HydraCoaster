@@ -5,6 +5,7 @@ import SwiftUI
 struct RootView: View {
     var client: CoasterClient
     var syncEngine: SyncEngine
+    var appServices: AppServices
 
     @AppStorage("hasOnboarded") private var hasOnboarded = false
     @State private var selectedTab: Tab = Self.initialTab
@@ -40,14 +41,24 @@ struct RootView: View {
             .tag(Tab.history)
 
             NavigationStack {
-                SettingsView(client: client)
+                SettingsView(client: client, appServices: appServices)
             }
             .tabItem { Label("Settings", systemImage: "gearshape.fill") }
             .tag(Tab.settings)
         }
         .tint(.hydraAccent)
         .fullScreenCover(isPresented: onboardingBinding) {
-            OnboardingFlow(client: client) { hasOnboarded = true }
+            OnboardingFlow(client: client) {
+                hasOnboarded = true
+                Task { await appServices.requestPermissions() }
+            }
+        }
+        .task {
+            // Onboarding's own finish handler requests permissions for
+            // first-time users; this covers every subsequent launch.
+            if hasOnboarded {
+                await appServices.requestPermissions()
+            }
         }
     }
 

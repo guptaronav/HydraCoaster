@@ -7,6 +7,7 @@ import SwiftUI
 /// change is also written to D006, and a fresh connect gets one push.
 struct SettingsView: View {
     var client: CoasterClient
+    var appServices: AppServices
 
     @Environment(\.modelContext) private var modelContext
     @State private var settings: AppSettings?
@@ -98,6 +99,12 @@ struct SettingsView: View {
                 settings[keyPath: keyPath] = newValue
                 try? modelContext.save()
                 writePrefsToDevice()
+                if keyPath == \.remindOn {
+                    // Off cancels the phone's mirror notification too; on
+                    // reschedules it — the coaster's D006 bit alone isn't
+                    // "reminders off" from the user's point of view.
+                    appServices.remindPreferenceDidChange()
+                }
             }
         )
     }

@@ -3,8 +3,9 @@ import SwiftUI
 
 @main
 struct HydraCoasterApp: App {
-    @State private var client = CoasterClient()
+    @State private var client: CoasterClient
     @State private var syncEngine: SyncEngine
+    @State private var appServices: AppServices
     private let modelContainer: ModelContainer
 
     init() {
@@ -23,12 +24,22 @@ struct HydraCoasterApp: App {
         }
         modelContainer = container
         let store = SwiftDataSipStore(modelContext: container.mainContext)
-        _syncEngine = State(initialValue: SyncEngine(store: store))
+        let client = CoasterClient()
+        let engine = SyncEngine(store: store)
+        _client = State(initialValue: client)
+        _syncEngine = State(initialValue: engine)
+        let context = container.mainContext
+        _appServices = State(initialValue: AppServices(
+            client: client,
+            syncEngine: engine,
+            store: store,
+            isRemindEnabled: { AppSettings.fetchOrCreate(in: context).remindOn }
+        ))
     }
 
     var body: some Scene {
         WindowGroup {
-            RootView(client: client, syncEngine: syncEngine)
+            RootView(client: client, syncEngine: syncEngine, appServices: appServices)
         }
         .modelContainer(modelContainer)
     }

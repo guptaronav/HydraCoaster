@@ -20,6 +20,14 @@
 	<string>1</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>HydraCoaster uses Bluetooth to connect to your coaster and track your sips.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>HydraCoaster logs each sip as water intake in Health.</string>
+	<key>OWMAPIKey</key>
+	<string>$(OWM_API_KEY)</string>
+	<key>OWMLat</key>
+	<string>$(OWM_LAT)</string>
+	<key>OWMLon</key>
+	<string>$(OWM_LON)</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>bluetooth-central</string>
