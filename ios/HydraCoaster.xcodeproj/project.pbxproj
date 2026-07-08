@@ -8,22 +8,49 @@
 
 /* Begin PBXBuildFile section */
 		2AF58B096D93C557222D9683 /* CoasterProtocolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB614A61B391F117469B9F8 /* CoasterProtocolTests.swift */; };
+		3E3C0EB2E0AB64F58D838C25 /* GoalRingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BFB42B9BF68B473E468A94F /* GoalRingView.swift */; };
+		4F486189F8B7F0D70B0123A5 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC4758BC12EF94BD80F036B2 /* Theme.swift */; };
+		5DD61E19C091D18EBE862589 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4543064662ED135C3305086 /* TodayView.swift */; };
 		793A6D35ADE8461562F8BED1 /* CoasterProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D27588433F792039DE01CB /* CoasterProtocol.swift */; };
+		7BC753DDC213EE6D8A18E15E /* LiveReadingCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C44E9BB0572550E6ACB300A /* LiveReadingCard.swift */; };
+		961079BC7B6792BBE3A9014A /* ConnectionHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4641ED60BF98CCE0CBCA35A9 /* ConnectionHeader.swift */; };
+		9D16D7D4868DF7C52FCB272C /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = C81F90EB90D7EF2B73213454 /* Models.swift */; };
 		BE11C3A3594555B1BA1AEF51 /* CoasterClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50B83DEAF82E16691BC594FE /* CoasterClient.swift */; };
-		C78CB7CE340459F1FAA3770F /* CoasterProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D27588433F792039DE01CB /* CoasterProtocol.swift */; };
+		CBD7CBC91827B2350AE69EF4 /* SyncEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A5528E1FFD57F9FFB553102 /* SyncEngineTests.swift */; };
+		DAD4C6323FB31EBB032C4987 /* SyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88736394D9774C1DFF87FF6A /* SyncEngine.swift */; };
 		E40BEEE1E8DB3E3E6953CF0A /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4F9428305D6234372DE2B8D /* App.swift */; };
+		EC6F2BC64154A078C1A1446F /* SipListSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A123027FDC7E499C4735C60 /* SipListSection.swift */; };
 		F2A736AA50BBBF9041590DE7 /* ConnectionDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6720005A5A4E1C2E3C4F929D /* ConnectionDebugView.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		78128B16C74D0947FA9E4169 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DEBBC564F3692B63F43B05D6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8CA05B0E25AED6DC601823BE;
+			remoteInfo = HydraCoaster;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		11E4E766722E42B686462BED /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		1AE79817CA19EF3725B21098 /* HydraCoaster.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HydraCoaster.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3A123027FDC7E499C4735C60 /* SipListSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SipListSection.swift; sourceTree = "<group>"; };
+		3A5528E1FFD57F9FFB553102 /* SyncEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncEngineTests.swift; sourceTree = "<group>"; };
+		4641ED60BF98CCE0CBCA35A9 /* ConnectionHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionHeader.swift; sourceTree = "<group>"; };
+		4C44E9BB0572550E6ACB300A /* LiveReadingCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveReadingCard.swift; sourceTree = "<group>"; };
 		50B83DEAF82E16691BC594FE /* CoasterClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoasterClient.swift; sourceTree = "<group>"; };
 		6720005A5A4E1C2E3C4F929D /* ConnectionDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionDebugView.swift; sourceTree = "<group>"; };
 		6BB614A61B391F117469B9F8 /* CoasterProtocolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoasterProtocolTests.swift; sourceTree = "<group>"; };
 		85DB0C5E3EF349CBFACC5700 /* HydraCoasterTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HydraCoasterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		88736394D9774C1DFF87FF6A /* SyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncEngine.swift; sourceTree = "<group>"; };
 		96D27588433F792039DE01CB /* CoasterProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoasterProtocol.swift; sourceTree = "<group>"; };
+		9BFB42B9BF68B473E468A94F /* GoalRingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalRingView.swift; sourceTree = "<group>"; };
+		BC4758BC12EF94BD80F036B2 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		C4F9428305D6234372DE2B8D /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		C81F90EB90D7EF2B73213454 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		D4543064662ED135C3305086 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -31,6 +58,7 @@
 			isa = PBXGroup;
 			children = (
 				6BB614A61B391F117469B9F8 /* CoasterProtocolTests.swift */,
+				3A5528E1FFD57F9FFB553102 /* SyncEngineTests.swift */,
 			);
 			path = HydraCoasterTests;
 			sourceTree = "<group>";
@@ -44,6 +72,15 @@
 			);
 			sourceTree = "<group>";
 		};
+		60F9763741F456EB915B1801 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				C81F90EB90D7EF2B73213454 /* Models.swift */,
+				88736394D9774C1DFF87FF6A /* SyncEngine.swift */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
 		6C299B23C733C3F1349F0DF3 /* Coaster */ = {
 			isa = PBXGroup;
 			children = (
@@ -53,6 +90,19 @@
 			path = Coaster;
 			sourceTree = "<group>";
 		};
+		C93196D9903C1E8620F7285E /* Today */ = {
+			isa = PBXGroup;
+			children = (
+				4641ED60BF98CCE0CBCA35A9 /* ConnectionHeader.swift */,
+				9BFB42B9BF68B473E468A94F /* GoalRingView.swift */,
+				4C44E9BB0572550E6ACB300A /* LiveReadingCard.swift */,
+				3A123027FDC7E499C4735C60 /* SipListSection.swift */,
+				BC4758BC12EF94BD80F036B2 /* Theme.swift */,
+				D4543064662ED135C3305086 /* TodayView.swift */,
+			);
+			path = Today;
+			sourceTree = "<group>";
+		};
 		E3AFAF6F91A5F5ACED8DB5F1 /* HydraCoaster */ = {
 			isa = PBXGroup;
 			children = (
@@ -60,6 +110,8 @@
 				6720005A5A4E1C2E3C4F929D /* ConnectionDebugView.swift */,
 				11E4E766722E42B686462BED /* Info.plist */,
 				6C299B23C733C3F1349F0DF3 /* Coaster */,
+				60F9763741F456EB915B1801 /* Data */,
+				C93196D9903C1E8620F7285E /* Today */,
 			);
 			path = HydraCoaster;
 			sourceTree = "<group>";
@@ -85,6 +137,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				6AEE17C26B3D827727112B00 /* PBXTargetDependency */,
 			);
 			name = HydraCoasterTests;
 			packageProductDependencies = (
@@ -150,6 +203,14 @@
 				BE11C3A3594555B1BA1AEF51 /* CoasterClient.swift in Sources */,
 				793A6D35ADE8461562F8BED1 /* CoasterProtocol.swift in Sources */,
 				F2A736AA50BBBF9041590DE7 /* ConnectionDebugView.swift in Sources */,
+				961079BC7B6792BBE3A9014A /* ConnectionHeader.swift in Sources */,
+				3E3C0EB2E0AB64F58D838C25 /* GoalRingView.swift in Sources */,
+				7BC753DDC213EE6D8A18E15E /* LiveReadingCard.swift in Sources */,
+				9D16D7D4868DF7C52FCB272C /* Models.swift in Sources */,
+				EC6F2BC64154A078C1A1446F /* SipListSection.swift in Sources */,
+				DAD4C6323FB31EBB032C4987 /* SyncEngine.swift in Sources */,
+				4F486189F8B7F0D70B0123A5 /* Theme.swift in Sources */,
+				5DD61E19C091D18EBE862589 /* TodayView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -157,12 +218,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C78CB7CE340459F1FAA3770F /* CoasterProtocol.swift in Sources */,
 				2AF58B096D93C557222D9683 /* CoasterProtocolTests.swift in Sources */,
+				CBD7CBC91827B2350AE69EF4 /* SyncEngineTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		6AEE17C26B3D827727112B00 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8CA05B0E25AED6DC601823BE /* HydraCoaster */;
+			targetProxy = 78128B16C74D0947FA9E4169 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		11DF1B62CAB97CB942D71AAE /* Debug */ = {
@@ -178,6 +247,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.ronav.HydraCoasterTests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HydraCoaster.app/HydraCoaster";
 			};
 			name = Debug;
 		};
@@ -349,6 +419,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.ronav.HydraCoasterTests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HydraCoaster.app/HydraCoaster";
 			};
 			name = Release;
 		};

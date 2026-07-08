@@ -34,8 +34,11 @@ targets:
     platform: iOS
     sources:
       - path: HydraCoasterTests
-      - path: HydraCoaster/Coaster/CoasterProtocol.swift
+    dependencies:
+      - target: HydraCoaster
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ronav.HydraCoasterTests
         GENERATE_INFOPLIST_FILE: "YES"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/HydraCoaster.app/HydraCoaster"
+        BUNDLE_LOADER: "$(TEST_HOST)"

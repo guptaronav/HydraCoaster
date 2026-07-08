@@ -1,9 +1,12 @@
 import Foundation
 import Testing
 
-// CoasterProtocol.swift is compiled directly into this standalone test
-// target (see project.yml), so its types are already in-module — no import
-// of the app target needed.
+@testable import HydraCoaster
+
+// HydraCoasterTests runs hosted by the HydraCoaster.app target (see
+// project.yml TEST_HOST/BUNDLE_LOADER) — SwiftData's ModelContainer needs a
+// real app bundle context, so `@testable import` replaces the earlier
+// standalone-compiled-sources pattern.
 struct CoasterProtocolTests {
 
     // MARK: - Weight decode

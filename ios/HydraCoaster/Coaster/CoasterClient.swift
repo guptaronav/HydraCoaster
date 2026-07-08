@@ -216,6 +216,12 @@ extension CoasterClient: CBCentralManagerDelegate {
     }
 }
 
+// MARK: - SipSource (T4 sync engine bridge)
+
+extension CoasterClient: SipSource {
+    var isConnected: Bool { connectionState == .connected }
+}
+
 // MARK: - CBPeripheralDelegate
 
 extension CoasterClient: CBPeripheralDelegate {
