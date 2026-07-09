@@ -9,10 +9,19 @@ reminders on its own — three tones (700 Hz for hearing-loss audibility,
 headphones) with the onboard NeoPixel flashing in sync.
 
 The companion iOS app connects over Bluetooth LE: it backfills the sip log,
-shows daily intake against a goal, writes each sip to Apple Health, mirrors
-reminders as phone notifications, and adjusts the reminder interval for hot or
-dry weather (OpenWeatherMap). Calibration, tare, sound/light/reminder
-preferences, and a guided recalibration flow live in the app's Settings.
+shows daily intake against a goal (fixed or personalized from body metrics,
+weather-scaled on hot/dry days via OpenWeatherMap), writes each sip to Apple
+Health, mirrors reminders as phone notifications, and pushes the
+weather-adjusted reminder interval to the coaster. Drinks can be logged
+manually or reclassified across a 61-drink catalog with hydration factors.
+History offers week/month charts, a 12-week heatmap, a per-drink breakdown,
+and CSV export; an Awards tab tracks streaks and badges, and the coaster
+plays a celebration flourish the first time the daily goal is hit. Quiet
+hours (manual or derived from the Health sleep schedule) silence both the
+coaster and phone overnight, with optional Focus-mode gating. Themes, a
+light/dark override, and a home/lock-screen progress widget round it out.
+Calibration, tare, sound/light/reminder preferences, and a guided
+recalibration flow live in the app's Settings.
 
 ## Layout
 
@@ -20,7 +29,8 @@ preferences, and a guided recalibration flow live in the app's Settings.
 |---|---|
 | `src/main.cpp` | Product firmware: NAU7802 sampling → `lib/brain` → BLE GATT |
 | `lib/brain/` | Decision logic (sip detection, auto-zero, reminders) — pure C++, natively unit-tested |
-| `ios/` | SwiftUI companion app (xcodegen project) |
+| `lib/quietwin/` | Quiet-window minute math (header-only, natively unit-tested) |
+| `ios/` | SwiftUI companion app + widget extension (xcodegen project) |
 | `docs/ble-protocol.md` | The firmware ↔ app BLE contract — single source of truth |
 | `poc/` | **Frozen** WiFi-era bench tools (Python server + web dashboard); superseded by the app |
 | `test_fsr/`, `test_weight/`, `test_nau/` | Hardware bring-up sketches |
@@ -46,7 +56,7 @@ xcodegen generate
 
 Open `ios/HydraCoaster.xcodeproj` in Xcode and run. On this machine the CLI
 needs `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` prefixed to
-`xcodebuild`/`xcrun`. Tests: 66 Swift Testing cases, simulator-only (BLE
+`xcodebuild`/`xcrun`. Tests: ~200 Swift Testing cases, simulator-only (BLE
 requires a real device; the SwiftData store is exercised in-app, not in the
 test process — see the note in `ios/HydraCoaster/Data/SyncEngine.swift`).
 
