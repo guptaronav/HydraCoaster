@@ -27,14 +27,49 @@ final class HealthKitLogger {
         }
     }
 
-    func log(_ record: SipRecord) {
-        guard isAvailable else { return }
-        // 1 g = 1 ml (see SyncEngine/DailyTotals — same equivalence used everywhere else).
-        let quantity = HKQuantity(unit: .literUnit(with: .milli), doubleValue: record.grams)
+    /// Writes one `dietaryWater` sample for `record` (effective ml — grams ×
+    /// hydrationFactor, 1 g = 1 ml). Returns the created sample's UUID so
+    /// the caller can persist it for a later delete-on-reclassify, or nil on
+    /// failure/unavailability — logged, never thrown, so a sip is never
+    /// blocked on Health permission.
+    @discardableResult
+    func log(_ record: SipRecord) async -> String? {
+        guard isAvailable else { return nil }
+        let quantity = HKQuantity(unit: .literUnit(with: .milli), doubleValue: record.effectiveGrams)
         let sample = HKQuantitySample(type: waterType, quantity: quantity, start: record.date, end: record.date)
-        store.save(sample) { [logger] success, error in
-            if let error {
-                logger.error("HealthKit save failed: \(error.localizedDescription)")
+        return await withCheckedContinuation { continuation in
+            store.save(sample) { [logger] success, error in
+                if let error {
+                    logger.error("HealthKit save failed: \(error.localizedDescription)")
+                }
+                continuation.resume(returning: success ? sample.uuid.uuidString : nil)
+            }
+        }
+    }
+
+    /// Deletes the sample at `oldUUID` (nil means nothing was ever written —
+    /// e.g. a prior save failed) then writes `record`'s current snapshot as
+    /// a new sample. Used when a sip is reclassified to a different drink
+    /// type, whose effective ml differs from whatever's already in Health.
+    /// Same non-blocking contract as `log`.
+    func replaceSample(oldUUID: String?, with record: SipRecord) async -> String? {
+        if let oldUUID, let uuid = UUID(uuidString: oldUUID) {
+            await deleteSample(uuid: uuid)
+        }
+        return await log(record)
+    }
+
+    /// Deletes only work on samples this app wrote — `deleteObjects` needs
+    /// just share (write) authorization for the type, not read, matching
+    /// the write-only authorization requested above.
+    private func deleteSample(uuid: UUID) async {
+        guard isAvailable else { return }
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            store.deleteObjects(of: waterType, predicate: HKQuery.predicateForObject(with: uuid)) { [logger] _, _, error in
+                if let error {
+                    logger.error("HealthKit delete failed: \(error.localizedDescription)")
+                }
+                continuation.resume()
             }
         }
     }

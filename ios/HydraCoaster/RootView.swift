@@ -35,7 +35,7 @@ struct RootView: View {
             .tag(Tab.today)
 
             NavigationStack {
-                HistoryView()
+                HistoryView(appServices: appServices)
             }
             .tabItem { Label("History", systemImage: "chart.bar.fill") }
             .tag(Tab.history)
@@ -57,7 +57,15 @@ struct RootView: View {
         .task {
             // Onboarding's own finish handler requests permissions for
             // first-time users; this covers every subsequent launch.
-            if hasOnboarded {
+            #if DEBUG
+            // Screenshot aid only: skips the system permission prompts so
+            // an automated capture pass isn't blocked behind a dialog it
+            // has no way to dismiss.
+            let skipForScreenshot = ProcessInfo.processInfo.environment["HC_SKIP_PERMISSIONS"] == "1"
+            #else
+            let skipForScreenshot = false
+            #endif
+            if hasOnboarded && !skipForScreenshot {
                 await appServices.requestPermissions()
             }
         }

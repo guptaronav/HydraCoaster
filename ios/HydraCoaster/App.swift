@@ -29,12 +29,25 @@ struct HydraCoasterApp: App {
         _client = State(initialValue: client)
         _syncEngine = State(initialValue: engine)
         let context = container.mainContext
-        _appServices = State(initialValue: AppServices(
+        let services = AppServices(
             client: client,
             syncEngine: engine,
             store: store,
             isRemindEnabled: { AppSettings.fetchOrCreate(in: context).remindOn }
-        ))
+        )
+        _appServices = State(initialValue: services)
+
+        #if DEBUG
+        // Screenshot aid only: `HC_SEED_DEMO_SIPS=1` logs a water sip then
+        // reclassifies it to coffee, so the gate can capture a
+        // reclassified non-water row without simulating any taps.
+        if ProcessInfo.processInfo.environment["HC_SEED_DEMO_SIPS"] == "1" {
+            engine.logManualSip(drink: DrinkCatalog.water, grams: 350)
+            if let seq = store.loadAll().first?.seq {
+                services.reclassify(seq: seq, to: DrinkCatalog.drink(for: "coffee.latte"))
+            }
+        }
+        #endif
     }
 
     var body: some Scene {

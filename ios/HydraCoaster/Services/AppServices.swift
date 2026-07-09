@@ -12,6 +12,11 @@ final class AppServices {
     private let reminderScheduler: ReminderScheduler
     let weatherService: WeatherService // exposed for the DEBUG panel
     private let healthKitLogger: HealthKitLogger
+    /// Same storage seam SyncEngine writes through — needed here to persist
+    /// the HealthKit UUID once a write confirms, and to read/update a sip
+    /// on reclassify. Not a second writer of new sips: only SyncEngine ever
+    /// inserts.
+    private let store: SipEventStoring
 
     /// Current D005 value (behavior-free). Starts at the firmware default
     /// and only moves once weather is enabled and a fetch succeeds.
@@ -37,6 +42,7 @@ final class AppServices {
         self.weatherService = WeatherService()
         self.healthKitLogger = HealthKitLogger()
         self.isRemindEnabled = isRemindEnabled
+        self.store = store
         self.sips = store.loadAll()
 
         syncEngine.onNewSip = { [weak self] record in
@@ -76,8 +82,46 @@ final class AppServices {
 
     private func handleNewSip(_ record: SipRecord) {
         sips.append(record)
-        healthKitLogger.log(record)
         rescheduleReminder()
+        Task { @MainActor [weak self] in await self?.syncHealthKit(seq: record.seq) }
+    }
+
+    /// Reclassifies a stored sip to a new drink type (row tap → type
+    /// picker): snapshots the new type/factor onto the record right away —
+    /// the row updates immediately — then syncs Apple Health the same way
+    /// the initial write does. The store update is synchronous and always
+    /// succeeds; the Health swap is best-effort and non-blocking, same as
+    /// every other HealthKit write here.
+    func reclassify(seq: Int, to drink: DrinkType) {
+        guard let current = store.record(seq: seq) else { return }
+        store.updateType(seq: seq, typeID: drink.id, hydrationFactor: drink.hydrationFactor)
+        if let index = sips.firstIndex(where: { $0.seq == seq }) {
+            sips[index] = current.reclassified(to: drink)
+        }
+        Task { @MainActor [weak self] in await self?.syncHealthKit(seq: seq) }
+    }
+
+    /// Writes a sip's CURRENT snapshot to Apple Health, replacing whatever
+    /// sample already exists for it. Shared by the initial log and
+    /// reclassify — re-reading the store right before the Health call
+    /// (rather than acting on a snapshot captured earlier) is what stops a
+    /// reclassify that lands while the initial write is still in flight
+    /// from being clobbered by it, or vice versa: whichever of the two
+    /// calls actually runs its Health I/O last sees the other's effect
+    /// already in the store.
+    // ponytail: a reclassify landing in the same run-loop turn as the
+    // initial log (before either Task gets scheduled) can still race to two
+    // Health samples for one sip — not closeable without a per-seq write
+    // queue. Not worth it: reaching a stored sip's row to reclassify it
+    // requires the initial insert to have already rendered, which in
+    // practice is well past that window.
+    private func syncHealthKit(seq: Int) async {
+        guard let current = store.record(seq: seq) else { return }
+        let newUUID = await healthKitLogger.replaceSample(oldUUID: current.hkSampleUUID, with: current)
+        store.updateHealthKitUUID(seq: seq, uuid: newUUID)
+        if let index = sips.firstIndex(where: { $0.seq == seq }) {
+            sips[index] = sips[index].withHealthKitUUID(newUUID)
+        }
     }
 
     private func handleWeatherUpdate(_ seconds: UInt16) {

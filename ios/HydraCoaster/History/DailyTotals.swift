@@ -27,7 +27,7 @@ enum DailyTotals {
         var totalsByDay: [Date: Double] = [:]
         for record in records {
             let day = calendar.startOfDay(for: record.date)
-            totalsByDay[day, default: 0] += record.grams
+            totalsByDay[day, default: 0] += record.effectiveGrams
         }
 
         return days.map { day in

@@ -18,6 +18,21 @@ private final class FakeSipStore: SipEventStoring {
     func loadAll() -> [SipRecord] { records }
     func insert(_ record: SipRecord) { records.append(record) }
     func deleteAll() { records.removeAll() }
+
+    func record(seq: Int) -> SipRecord? {
+        records.first { $0.seq == seq }
+    }
+
+    func updateType(seq: Int, typeID: String, hydrationFactor: Double) {
+        guard let index = records.firstIndex(where: { $0.seq == seq }) else { return }
+        records[index].typeID = typeID
+        records[index].hydrationFactor = hydrationFactor
+    }
+
+    func updateHealthKitUUID(seq: Int, uuid: String?) {
+        guard let index = records.firstIndex(where: { $0.seq == seq }) else { return }
+        records[index].hkSampleUUID = uuid
+    }
 }
 
 /// Fake BLE source: hand-fed AsyncStream, records backfill requests.
@@ -165,5 +180,98 @@ struct SyncEngineTests {
         engine.ingest(SipPacket(seq: 2, unixTs: 1_700_000_100, grams: 12))
 
         #expect(seen == [1, 2])
+    }
+
+    // MARK: - V2-T2: drink types
+
+    @Test func ingest_coasterPacket_defaultsToWater() {
+        let (engine, store) = makeEngine()
+        engine.ingest(SipPacket(seq: 1, unixTs: 1_700_000_000, grams: 42.0))
+
+        #expect(store.records.first?.typeID == DrinkCatalog.water.id)
+        #expect(store.records.first?.hydrationFactor == 1.0)
+        #expect(store.records.first?.isManual == false)
+    }
+
+    @Test func logManualSip_storesIsManualAndCatalogSnapshot() {
+        let (engine, store) = makeEngine()
+        let coffee = DrinkCatalog.drink(for: "coffee.black")
+
+        engine.logManualSip(drink: coffee, grams: 200)
+
+        #expect(store.records.count == 1)
+        #expect(store.records[0].isManual == true)
+        #expect(store.records[0].typeID == "coffee.black")
+        #expect(store.records[0].hydrationFactor == coffee.hydrationFactor)
+    }
+
+    @Test func logManualSip_seqIsNegative_andCantCollideWithCoasterSeqs() {
+        let (engine, store) = makeEngine()
+        engine.logManualSip(drink: DrinkCatalog.water, grams: 100)
+
+        #expect(store.records[0].seq < 0)
+        // The coaster's seq is a uint32 — always >= 0 — so a negative
+        // manual seq can never equal one, regardless of value.
+        #expect(!(0...Int(UInt32.max)).contains(store.records[0].seq))
+    }
+
+    @Test func logManualSip_twoCalls_produceDifferentSeqs() {
+        let (engine, store) = makeEngine()
+        engine.logManualSip(drink: DrinkCatalog.water, grams: 100)
+        // Guarantee a distinct millisecond so the two ms-epoch-derived seqs differ.
+        Thread.sleep(forTimeInterval: 0.002)
+        engine.logManualSip(drink: DrinkCatalog.water, grams: 200)
+
+        #expect(store.records.count == 2)
+        #expect(store.records[0].seq != store.records[1].seq)
+    }
+
+    @Test func logManualSip_futureDate_clampedToNow() {
+        let (engine, store) = makeEngine()
+        let farFuture = Date().addingTimeInterval(3600)
+        let before = Date()
+
+        engine.logManualSip(drink: DrinkCatalog.water, grams: 100, date: farFuture)
+
+        #expect(store.records[0].date <= Date())
+        #expect(store.records[0].date >= before)
+    }
+
+    @Test func consumedToday_usesEffectiveMlNotRawGrams() {
+        let (engine, _) = makeEngine()
+        let wine = DrinkCatalog.drink(for: "alcohol.wineRed") // hydrationFactor 0.4
+
+        engine.logManualSip(drink: wine, grams: 100)
+
+        #expect(engine.consumedToday() == 40)
+    }
+
+    @Test func reclassify_pureFunction_updatesTypeAndFactorOnly() {
+        let original = SipRecord(
+            seq: 1, date: Date(timeIntervalSince1970: 1_700_000_000), grams: 350,
+            isEstimatedDate: false, typeID: DrinkCatalog.water.id, hydrationFactor: 1.0,
+            isManual: true, hkSampleUUID: "abc-123"
+        )
+        let coffee = DrinkCatalog.drink(for: "coffee.black")
+
+        let reclassified = original.reclassified(to: coffee)
+
+        #expect(reclassified.typeID == "coffee.black")
+        #expect(reclassified.hydrationFactor == coffee.hydrationFactor)
+        #expect(reclassified.seq == original.seq)
+        #expect(reclassified.date == original.date)
+        #expect(reclassified.grams == original.grams)
+        #expect(reclassified.isManual == original.isManual)
+        #expect(reclassified.hkSampleUUID == original.hkSampleUUID) // caller swaps this separately
+        #expect(reclassified.effectiveGrams == 350 * coffee.hydrationFactor)
+    }
+
+    @Test func withHealthKitUUID_pureFunction_updatesUUIDOnly() {
+        let original = SipRecord(seq: 1, date: Date(), grams: 100, isEstimatedDate: false)
+        let updated = original.withHealthKitUUID("new-uuid")
+
+        #expect(updated.hkSampleUUID == "new-uuid")
+        #expect(updated.typeID == original.typeID)
+        #expect(updated.grams == original.grams)
     }
 }

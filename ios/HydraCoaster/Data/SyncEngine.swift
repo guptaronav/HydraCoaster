@@ -17,6 +17,52 @@ struct SipRecord: Equatable, Sendable {
     let date: Date
     let grams: Double
     let isEstimatedDate: Bool
+    /// Drink-type snapshot (V2-T2): catalog id and hydration factor AT LOG
+    /// TIME, so later catalog tweaks don't rewrite historical totals.
+    /// Defaulted to plain water so every pre-V2-T2 call site (tests
+    /// included) keeps compiling unchanged. `var` (not `let`) is required
+    /// here — a `let` with an inline default can never be overridden by an
+    /// initializer parameter, only `var` gets a real, settable default
+    /// parameter in the synthesized memberwise init (SE-0242). SipRecord
+    /// stays value-semantics-immutable in practice: nothing here ever
+    /// mutates a field in place, `reclassified`/`withHealthKitUUID` below
+    /// always return a new copy.
+    var typeID: String = DrinkCatalog.water.id
+    var hydrationFactor: Double = DrinkCatalog.water.hydrationFactor
+    /// True for sips logged via the Quick Log sheet rather than the coaster.
+    var isManual: Bool = false
+    /// Apple Health sample UUID for this sip once HealthKitLogger's write
+    /// succeeds — nil until then, and swapped on reclassify.
+    var hkSampleUUID: String? = nil
+
+    /// Grams × hydrationFactor — the number that feeds every total (Today
+    /// ring, History buckets, HealthKit sample amount). Raw `grams` stays
+    /// around for the sip row's "350 ml" label and the reminder scheduler's
+    /// burst detection.
+    var effectiveGrams: Double { grams * hydrationFactor }
+}
+
+extension SipRecord {
+    /// New copy with `hkSampleUUID` set — used once HealthKit's write
+    /// confirms with a UUID. Every other field carries over unchanged.
+    func withHealthKitUUID(_ uuid: String?) -> SipRecord {
+        SipRecord(
+            seq: seq, date: date, grams: grams, isEstimatedDate: isEstimatedDate,
+            typeID: typeID, hydrationFactor: hydrationFactor, isManual: isManual,
+            hkSampleUUID: uuid
+        )
+    }
+
+    /// New copy reclassified to `drink`: typeID/hydrationFactor snapshot
+    /// updates to match. Pure — the Health-sample swap and store write this
+    /// feeds are the caller's job (see `AppServices.reclassify`).
+    func reclassified(to drink: DrinkType) -> SipRecord {
+        SipRecord(
+            seq: seq, date: date, grams: grams, isEstimatedDate: isEstimatedDate,
+            typeID: drink.id, hydrationFactor: drink.hydrationFactor, isManual: isManual,
+            hkSampleUUID: hkSampleUUID
+        )
+    }
 }
 
 /// Storage seam between the sync engine and SwiftData.
@@ -32,6 +78,19 @@ protocol SipEventStoring: AnyObject {
     func loadAll() -> [SipRecord]
     func insert(_ record: SipRecord)
     func deleteAll()
+    /// Single sip by sequence number, or nil if it no longer exists.
+    func record(seq: Int) -> SipRecord?
+    /// Persists a reclassify's new type snapshot. Deliberately separate
+    /// from `updateHealthKitUUID` (not one combined "update anything"
+    /// method) — AppServices has two independent async writers that can
+    /// race on the same seq (the initial HealthKit write and a reclassify's
+    /// swap); keeping the two fields' writes on two different methods,
+    /// each touching only what it means to change, is what stops one from
+    /// clobbering the other's field with a stale value.
+    func updateType(seq: Int, typeID: String, hydrationFactor: Double)
+    /// Persists the Apple Health sample UUID for a sip once a write
+    /// confirms. See `updateType`'s note on why this is its own method.
+    func updateHealthKitUUID(seq: Int, uuid: String?)
 }
 
 /// Bridges the BLE client's sip stream into storage: dedupes by sequence
@@ -141,23 +200,56 @@ final class SyncEngine {
             isEstimatedDate = true
         }
 
-        let record = SipRecord(seq: seq, date: date, grams: packet.grams, isEstimatedDate: isEstimatedDate)
+        // Coaster packets carry no type info on the wire — default to
+        // plain water; the user can reclassify afterwards.
+        let record = SipRecord(
+            seq: seq, date: date, grams: packet.grams, isEstimatedDate: isEstimatedDate,
+            typeID: DrinkCatalog.water.id, hydrationFactor: DrinkCatalog.water.hydrationFactor,
+            isManual: false, hkSampleUUID: nil
+        )
+        persist(record)
+    }
+
+    /// Logs a manually-entered sip (Quick Log sheet): same store + dedupe +
+    /// fan-out tail as `ingest`, just sourced from the UI instead of BLE.
+    /// `seq` is a negative ms-epoch timestamp — it can never collide with
+    /// the coaster's positive uint32 seqs, so no counter state is needed.
+    /// `date` is clamped to "now" so a stale sheet can't backdate a sip into
+    /// the future.
+    func logManualSip(drink: DrinkType, grams: Double, date: Date = Date()) {
+        let now = Date()
+        let record = SipRecord(
+            seq: -Int(now.timeIntervalSince1970 * 1000), date: min(date, now), grams: grams,
+            isEstimatedDate: false, typeID: drink.id, hydrationFactor: drink.hydrationFactor,
+            isManual: true, hkSampleUUID: nil
+        )
+        persist(record)
+    }
+
+    /// Shared tail for `ingest`/`logManualSip`: persists, marks the seq
+    /// known, and fans out `onNewSip` exactly once per newly stored sip —
+    /// the single point HealthKit logging and reminder rescheduling hang
+    /// off of (see AppServices).
+    private func persist(_ record: SipRecord) {
         store.insert(record)
-        knownSeqs.insert(seq)
+        knownSeqs.insert(record.seq)
         onNewSip?(record)
     }
 
-    /// Highest sequence number currently stored, or 0 if the store is empty.
+    /// Highest COASTER sequence number currently stored, or 0 if none are.
+    /// Manual sips' negative seqs are excluded — they'd otherwise make this
+    /// go negative and crash the `UInt32(...)` backfill request the moment
+    /// someone logs a manual sip before ever syncing with the coaster.
     func maxStoredSeq() -> Int {
-        knownSeqs.max() ?? 0
+        knownSeqs.filter { $0 >= 0 }.max() ?? 0
     }
 
-    /// Total grams (== ml) sipped today, 1 g = 1 ml.
+    /// Total effective ml (grams × hydrationFactor) sipped today.
     // ponytail: full load + Swift filter; fine at sip scale, revisit only if
     // the store ever holds years of data.
     func consumedToday() -> Double {
         store.loadAll()
             .filter { Calendar.current.isDateInToday($0.date) }
-            .reduce(0) { $0 + $1.grams }
+            .reduce(0) { $0 + $1.effectiveGrams }
     }
 }

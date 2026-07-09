@@ -15,12 +15,37 @@ final class SipEvent {
     /// (`unixTs == 0` on the wire) — `date` is the phone's receipt time, a
     /// same-day approximation, not when the sip actually happened.
     var isEstimatedDate: Bool
+    /// Drink-type snapshot (V2-T2). Optional/defaulted so SwiftData's
+    /// automatic lightweight migration can add these to an existing store —
+    /// see `SipRecord` for why the factor is a snapshot, not a live lookup.
+    var typeID: String = DrinkCatalog.water.id
+    var hydrationFactor: Double = DrinkCatalog.water.hydrationFactor
+    /// True for sips logged via the Quick Log sheet rather than the coaster.
+    var isManual: Bool = false
+    /// Apple Health sample UUID for this sip, once HealthKitLogger's write
+    /// succeeds — nil until then, and swapped on reclassify.
+    var hkSampleUUID: String?
 
-    init(seq: Int, date: Date, grams: Double, isEstimatedDate: Bool) {
+    var effectiveGrams: Double { grams * hydrationFactor }
+
+    init(
+        seq: Int,
+        date: Date,
+        grams: Double,
+        isEstimatedDate: Bool,
+        typeID: String = DrinkCatalog.water.id,
+        hydrationFactor: Double = DrinkCatalog.water.hydrationFactor,
+        isManual: Bool = false,
+        hkSampleUUID: String? = nil
+    ) {
         self.seq = seq
         self.date = date
         self.grams = grams
         self.isEstimatedDate = isEstimatedDate
+        self.typeID = typeID
+        self.hydrationFactor = hydrationFactor
+        self.isManual = isManual
+        self.hkSampleUUID = hkSampleUUID
     }
 }
 
@@ -95,9 +120,7 @@ final class SwiftDataSipStore: SipEventStoring {
 
     func loadAll() -> [SipRecord] {
         let events = (try? modelContext.fetch(FetchDescriptor<SipEvent>())) ?? []
-        return events.map {
-            SipRecord(seq: $0.seq, date: $0.date, grams: $0.grams, isEstimatedDate: $0.isEstimatedDate)
-        }
+        return events.map(Self.record)
     }
 
     func insert(_ record: SipRecord) {
@@ -105,7 +128,11 @@ final class SwiftDataSipStore: SipEventStoring {
             seq: record.seq,
             date: record.date,
             grams: record.grams,
-            isEstimatedDate: record.isEstimatedDate
+            isEstimatedDate: record.isEstimatedDate,
+            typeID: record.typeID,
+            hydrationFactor: record.hydrationFactor,
+            isManual: record.isManual,
+            hkSampleUUID: record.hkSampleUUID
         )
         modelContext.insert(sip)
         do {
@@ -114,6 +141,51 @@ final class SwiftDataSipStore: SipEventStoring {
             Logger(subsystem: "com.ronav.HydraCoaster", category: "SipStore")
                 .error("save failed for seq=\(record.seq): \(error)")
         }
+    }
+
+    func record(seq: Int) -> SipRecord? {
+        event(seq: seq).map(Self.record)
+    }
+
+    func updateType(seq: Int, typeID: String, hydrationFactor: Double) {
+        guard let event = event(seq: seq) else { return }
+        event.typeID = typeID
+        event.hydrationFactor = hydrationFactor
+        save(context: "updateType", seq: seq)
+    }
+
+    func updateHealthKitUUID(seq: Int, uuid: String?) {
+        guard let event = event(seq: seq) else { return }
+        event.hkSampleUUID = uuid
+        save(context: "updateHealthKitUUID", seq: seq)
+    }
+
+    private func save(context: String, seq: Int) {
+        do {
+            try modelContext.save()
+        } catch {
+            Logger(subsystem: "com.ronav.HydraCoaster", category: "SipStore")
+                .error("\(context) failed for seq=\(seq): \(error)")
+        }
+    }
+
+    private func event(seq: Int) -> SipEvent? {
+        var descriptor = FetchDescriptor<SipEvent>(predicate: #Predicate { $0.seq == seq })
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first
+    }
+
+    private static func record(_ event: SipEvent) -> SipRecord {
+        SipRecord(
+            seq: event.seq,
+            date: event.date,
+            grams: event.grams,
+            isEstimatedDate: event.isEstimatedDate,
+            typeID: event.typeID,
+            hydrationFactor: event.hydrationFactor,
+            isManual: event.isManual,
+            hkSampleUUID: event.hkSampleUUID
+        )
     }
 
     func deleteAll() {

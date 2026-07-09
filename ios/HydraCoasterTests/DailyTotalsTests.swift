@@ -65,4 +65,18 @@ struct DailyTotalsTests {
         let totals = DailyTotals.compute(from: records, endingAt: now, calendar: calendar)
         #expect(totals.reduce(0) { $0 + $1.totalML } == 0)
     }
+
+    @Test func compute_bucketsEffectiveMlNotRawGrams() {
+        let now = Date()
+        let records = [
+            // Plain water (factor 1.0) + red wine (factor 0.4) on the same day.
+            SipRecord(seq: 1, date: day(0, from: now, hour: 8), grams: 200, isEstimatedDate: false),
+            SipRecord(
+                seq: 2, date: day(0, from: now, hour: 20), grams: 150, isEstimatedDate: false,
+                typeID: "alcohol.wineRed", hydrationFactor: 0.4, isManual: true, hkSampleUUID: nil
+            ),
+        ]
+        let totals = DailyTotals.compute(from: records, endingAt: now, calendar: calendar)
+        #expect(totals.last?.totalML == 260) // 200 * 1.0 + 150 * 0.4
+    }
 }

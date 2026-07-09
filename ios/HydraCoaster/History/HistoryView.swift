@@ -6,6 +6,8 @@ import SwiftUI
 /// whichever day is selected (today by default). Pure bucketing math lives
 /// in DailyTotals so it's testable without SwiftData in the loop.
 struct HistoryView: View {
+    var appServices: AppServices
+
     @Query private var allSips: [SipEvent]
     @Environment(\.modelContext) private var modelContext
     @State private var settings: AppSettings?
@@ -15,7 +17,11 @@ struct HistoryView: View {
 
     private var totals: [DailyTotal] {
         let records = allSips.map {
-            SipRecord(seq: $0.seq, date: $0.date, grams: $0.grams, isEstimatedDate: $0.isEstimatedDate)
+            SipRecord(
+                seq: $0.seq, date: $0.date, grams: $0.grams, isEstimatedDate: $0.isEstimatedDate,
+                typeID: $0.typeID, hydrationFactor: $0.hydrationFactor, isManual: $0.isManual,
+                hkSampleUUID: $0.hkSampleUUID
+            )
         }
         return DailyTotals.compute(from: records)
     }
@@ -42,7 +48,12 @@ struct HistoryView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
                 chart
-                SipListSection(sips: sipsForDisplayedDay, title: sectionTitle, emptyText: "No sips on this day.")
+                SipListSection(
+                    sips: sipsForDisplayedDay,
+                    title: sectionTitle,
+                    emptyText: "No sips on this day.",
+                    onReclassify: { sip, drink in appServices.reclassify(seq: sip.seq, to: drink) }
+                )
             }
             .padding(20)
         }
@@ -99,6 +110,9 @@ struct HistoryView: View {
 }
 
 #Preview {
-    NavigationStack { HistoryView() }
-        .modelContainer(try! .ephemeral())
+    let container = try! ModelContainer.ephemeral()
+    let store = SwiftDataSipStore(modelContext: container.mainContext)
+    let services = AppServices(client: CoasterClient(), syncEngine: SyncEngine(store: store), store: store)
+    NavigationStack { HistoryView(appServices: services) }
+        .modelContainer(container)
 }

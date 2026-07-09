@@ -12,6 +12,7 @@ struct TodayView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(WeatherService.self) private var weather
     @State private var settings: AppSettings?
+    @State private var showingLogSheet = false
 
     // ponytail: today-filter duplicates SyncEngine.consumedToday()'s date
     // logic in ~1 line; sharing it would mean plumbing a FetchDescriptor
@@ -22,7 +23,7 @@ struct TodayView: View {
     }
 
     private var consumedML: Double {
-        todaysSips.reduce(0) { $0 + $1.grams }
+        todaysSips.reduce(0) { $0 + $1.effectiveGrams }
     }
 
     private var baseGoalML: Double {
@@ -62,13 +63,20 @@ struct TodayView: View {
                     onScanTapped: { client.startScanning() }
                 )
 
-                SipListSection(sips: todaysSips)
+                SipListSection(sips: todaysSips, onReclassify: reclassify)
             }
             .padding(20)
         }
         .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("Today")
         .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showingLogSheet = true
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                }
+            }
             #if DEBUG
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink("Debug") {
@@ -78,9 +86,23 @@ struct TodayView: View {
             }
             #endif
         }
+        .sheet(isPresented: $showingLogSheet) {
+            LogDrinkSheet(syncEngine: syncEngine)
+        }
         .task {
             syncEngine.start(with: client)
             settings = AppSettings.fetchOrCreate(in: modelContext)
+            #if DEBUG
+            // Screenshot aid only: `HC_SHOW_LOG_SHEET=1` opens the Quick Log
+            // sheet at launch so the gate can capture it without simulating a tap.
+            if ProcessInfo.processInfo.environment["HC_SHOW_LOG_SHEET"] == "1" {
+                showingLogSheet = true
+            }
+            #endif
         }
+    }
+
+    private func reclassify(_ sip: SipEvent, to drink: DrinkType) {
+        appServices.reclassify(seq: sip.seq, to: drink)
     }
 }
