@@ -9,6 +9,7 @@ struct RootView: View {
 
     @AppStorage("hasOnboarded") private var hasOnboarded = false
     @State private var selectedTab: Tab = Self.initialTab
+    @Environment(\.scenePhase) private var scenePhase
 
     private enum Tab: Int {
         case today, history, settings
@@ -67,6 +68,12 @@ struct RootView: View {
             #endif
             if hasOnboarded && !skipForScreenshot {
                 await appServices.requestPermissions()
+            }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            // Best-effort Focus re-check (V2-T4) — see AppServices.appDidBecomeActive.
+            if newPhase == .active {
+                appServices.appDidBecomeActive()
             }
         }
     }

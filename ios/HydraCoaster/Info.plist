@@ -20,6 +20,8 @@
 	<string>1</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>HydraCoaster uses Bluetooth to connect to your coaster and track your sips.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>HydraCoaster reads your sleep schedule to figure out quiet hours automatically.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>HydraCoaster logs each sip as water intake in Health.</string>
 	<key>OWMAPIKey</key>

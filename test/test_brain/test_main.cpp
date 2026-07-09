@@ -6,10 +6,12 @@
 #include <cstdint>
 
 #include "brain.h"
+#include "quietwin.h"
 
 using hydra::Brain;
 using hydra::CmdResult;
 using hydra::SampleEvent;
+using hydra::quietwin::inQuietWindow;
 
 namespace {
 
@@ -190,6 +192,37 @@ void test_tare_and_calibrate_result_codes(void) {
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 2.5f, b.countsPerGram());
 }
 
+// 8. Quiet window (D009, lib/quietwin): non-wrapping window, inside/outside
+//    and both boundaries (inclusive start, exclusive end).
+void test_quiet_window_non_wrapping(void) {
+    TEST_ASSERT_FALSE(inQuietWindow(479, 480, 600));  // just before start
+    TEST_ASSERT_TRUE(inQuietWindow(480, 480, 600));   // exactly at start
+    TEST_ASSERT_TRUE(inQuietWindow(599, 480, 600));   // just before end
+    TEST_ASSERT_FALSE(inQuietWindow(600, 480, 600));  // exactly at end
+    TEST_ASSERT_FALSE(inQuietWindow(601, 480, 600));  // just after end
+}
+
+// 9. Quiet window wrapping midnight (e.g. 23:00-07:00 => 1380..420): active
+//    on both sides of the midnight rollover, inactive in the daytime gap.
+void test_quiet_window_wraps_midnight(void) {
+    TEST_ASSERT_TRUE(inQuietWindow(1380, 1380, 420));  // exactly at start (23:00)
+    TEST_ASSERT_TRUE(inQuietWindow(1439, 1380, 420));  // 23:59
+    TEST_ASSERT_TRUE(inQuietWindow(0, 1380, 420));      // midnight
+    TEST_ASSERT_TRUE(inQuietWindow(419, 1380, 420));    // 06:59
+    TEST_ASSERT_FALSE(inQuietWindow(420, 1380, 420));   // exactly at end (07:00)
+    TEST_ASSERT_FALSE(inQuietWindow(1379, 1380, 420));  // 22:59, just before start
+    TEST_ASSERT_FALSE(inQuietWindow(720, 1380, 420));   // noon, well outside
+}
+
+// 10. start == end is always disabled, regardless of value — this is how
+//     "0,0 = disabled" falls out for free with no separate flag.
+void test_quiet_window_equal_bounds_is_disabled(void) {
+    TEST_ASSERT_FALSE(inQuietWindow(0, 0, 0));
+    TEST_ASSERT_FALSE(inQuietWindow(700, 700, 700));
+    TEST_ASSERT_FALSE(inQuietWindow(0, 500, 500));
+    TEST_ASSERT_FALSE(inQuietWindow(1439, 500, 500));
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(test_settled_drop_is_a_sip);
@@ -199,5 +232,8 @@ int main(int argc, char **argv) {
     RUN_TEST(test_behavior_factor_thresholds_and_expires);
     RUN_TEST(test_reminder_due_repeat_cap_and_behavior_scaling);
     RUN_TEST(test_tare_and_calibrate_result_codes);
+    RUN_TEST(test_quiet_window_non_wrapping);
+    RUN_TEST(test_quiet_window_wraps_midnight);
+    RUN_TEST(test_quiet_window_equal_bounds_is_disabled);
     return UNITY_END();
 }

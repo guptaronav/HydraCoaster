@@ -18,6 +18,7 @@ targets:
         UILaunchScreen: {}
         NSBluetoothAlwaysUsageDescription: "HydraCoaster uses Bluetooth to connect to your coaster and track your sips."
         NSHealthUpdateUsageDescription: "HydraCoaster logs each sip as water intake in Health."
+        NSHealthShareUsageDescription: "HydraCoaster reads your sleep schedule to figure out quiet hours automatically."
         UIBackgroundModes:
           - bluetooth-central
         OWMAPIKey: "$(OWM_API_KEY)"
@@ -28,6 +29,7 @@ targets:
       properties:
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
+        com.apple.developer.focus-status: true
     configFiles:
       Debug: Secrets.xcconfig
       Release: Secrets.xcconfig

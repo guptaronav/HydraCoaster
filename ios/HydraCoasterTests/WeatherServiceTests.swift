@@ -83,4 +83,29 @@ struct WeatherServiceTests {
         #expect(WeatherService.decode(Data("not json".utf8)) == nil)
         #expect(WeatherService.decode(Data("{}".utf8)) == nil)
     }
+
+    // MARK: - scaledIntervalS(base:preset:) — V2-T4 reminder presets
+
+    @Test func scaledIntervalS_standardPreset_isUnchanged() {
+        #expect(WeatherService.scaledIntervalS(base: 1200, preset: .standard) == 1200)
+    }
+
+    @Test func scaledIntervalS_gentlePreset_multipliesByOneAndHalf() {
+        #expect(WeatherService.scaledIntervalS(base: 1200, preset: .gentle) == 1800)
+    }
+
+    @Test func scaledIntervalS_persistentPreset_multipliesBySixTenths() {
+        #expect(WeatherService.scaledIntervalS(base: 1200, preset: .persistent) == 720)
+    }
+
+    @Test func scaledIntervalS_gentlePreset_clampsToCeiling() {
+        // 14400 (weather-clamped ceiling already) * 1.5 would be 21600 —
+        // stays clamped to the coaster's own accepted range.
+        #expect(WeatherService.scaledIntervalS(base: 14400, preset: .gentle) == 14400)
+    }
+
+    @Test func scaledIntervalS_persistentPreset_clampsToFloor() {
+        // 60 (weather-clamped floor) * 0.6 would be 36 — clamps back up to 60.
+        #expect(WeatherService.scaledIntervalS(base: 60, preset: .persistent) == 60)
+    }
 }

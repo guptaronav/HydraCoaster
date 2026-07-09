@@ -127,4 +127,13 @@ struct CoasterProtocolTests {
         // 55.5 g -> grams_x10 = 555 = 0x022B -> LE 2B 02
         #expect(CoasterEncode.command(.calibrate(grams: 55.5)) == Data([0x03, 0x2B, 0x02]))
     }
+
+    @Test func encodeQuietWindow() {
+        // start=1320 (22:00) = 0x0528 -> LE 28 05, end=420 (07:00) = 0x01A4 -> LE A4 01
+        #expect(CoasterEncode.quietWindow(startMin: 1320, endMin: 420) == Data([0x28, 0x05, 0xA4, 0x01]))
+    }
+
+    @Test func encodeQuietWindow_disabled() {
+        #expect(CoasterEncode.quietWindow(startMin: 0, endMin: 0) == Data([0x00, 0x00, 0x00, 0x00]))
+    }
 }

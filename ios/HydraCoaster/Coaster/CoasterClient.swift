@@ -47,6 +47,7 @@ final class CoasterClient: NSObject {
         static let prefs = CBUUID(string: CoasterUUID.prefs)
         static let command = CBUUID(string: CoasterUUID.command)
         static let status = CBUUID(string: CoasterUUID.status)
+        static let quietWindow = CBUUID(string: CoasterUUID.quietWindow)
         static let batteryService = CBUUID(string: CoasterUUID.batteryService)
         static let batteryLevel = CBUUID(string: CoasterUUID.batteryLevel)
 
@@ -118,6 +119,12 @@ final class CoasterClient: NSObject {
 
     func write(prefs: CoasterPrefs) {
         write(CoasterEncode.prefs(prefs), to: GATT.prefs)
+    }
+
+    /// D009 — `startMin`/`endMin` must already be UTC minutes-of-day (see
+    /// `localMinutesToUTCMinutes`); this client has zero timezone logic.
+    func write(quietWindowStartMin startMin: UInt16, endMin: UInt16) {
+        write(CoasterEncode.quietWindow(startMin: startMin, endMin: endMin), to: GATT.quietWindow)
     }
 
     func sendCommand(_ command: CoasterCommand) {

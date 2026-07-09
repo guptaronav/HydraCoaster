@@ -11,6 +11,7 @@ enum CoasterUUID {
     static let prefs = "AD0BD006-2A44-4E5B-9C8B-4B1E7C0D5E2A"
     static let command = "AD0BD007-2A44-4E5B-9C8B-4B1E7C0D5E2A"
     static let status = "AD0BD008-2A44-4E5B-9C8B-4B1E7C0D5E2A"
+    static let quietWindow = "AD0BD009-2A44-4E5B-9C8B-4B1E7C0D5E2A"
     static let batteryService = "180F"
     static let batteryLevel = "2A19"
 }
@@ -156,6 +157,13 @@ enum CoasterEncode {
     /// D003 — backfill request: uint32 last_seq, 4 B LE.
     static func sipBackfillRequest(afterSeq seq: UInt32) -> Data {
         Data(leBytes(seq))
+    }
+
+    /// D009 — Quiet Window: uint16 start_min, uint16 end_min, both UTC
+    /// minutes-of-day, 4 B LE. `startMin == endMin` (canonically `0,0`) is
+    /// disabled — see docs/ble-protocol.md.
+    static func quietWindow(startMin: UInt16, endMin: UInt16) -> Data {
+        Data(leBytes(startMin) + leBytes(endMin))
     }
 
     /// D007 — Command write.

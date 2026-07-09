@@ -64,6 +64,21 @@ final class AppSettings {
     var heightCm: Double?
     var activityLevel: Int = 1
     var usePersonalizedGoal: Bool = false
+    /// Quiet Hours (V2-T4). Optional/defaulted so SwiftData's lightweight
+    /// migration can add these to an existing store. `quietMode` is a
+    /// `QuietMode` raw value; `quietStartMin`/`quietEndMin` are LOCAL
+    /// minutes-of-day (see `QuietMode` for the on-disk meaning, and
+    /// `AppServices` for the local->UTC conversion at BLE-write time). In
+    /// sleep mode these two fields ARE the derived window — everything
+    /// downstream (BLE write, phone-mirror scheduling, Settings display)
+    /// reads them the same way regardless of mode.
+    var quietMode: Int = 0
+    var quietStartMin: Int = 1320 // 22:00
+    var quietEndMin: Int = 420    // 07:00
+    /// Best-effort Focus awareness (V2-T4) — see `FocusStatusGate`.
+    var respectFocus: Bool = false
+    /// Reminder frequency preset (V2-T4) — see `ReminderPreset`.
+    var reminderPreset: Int = ReminderPreset.standard.rawValue
 
     init(
         goalML: Double = 2000,
@@ -73,7 +88,12 @@ final class AppSettings {
         weightKg: Double? = nil,
         heightCm: Double? = nil,
         activityLevel: Int = 1,
-        usePersonalizedGoal: Bool = false
+        usePersonalizedGoal: Bool = false,
+        quietMode: Int = 0,
+        quietStartMin: Int = 1320,
+        quietEndMin: Int = 420,
+        respectFocus: Bool = false,
+        reminderPreset: Int = ReminderPreset.standard.rawValue
     ) {
         self.goalML = goalML
         self.soundOn = soundOn
@@ -83,6 +103,11 @@ final class AppSettings {
         self.heightCm = heightCm
         self.activityLevel = activityLevel
         self.usePersonalizedGoal = usePersonalizedGoal
+        self.quietMode = quietMode
+        self.quietStartMin = quietStartMin
+        self.quietEndMin = quietEndMin
+        self.respectFocus = respectFocus
+        self.reminderPreset = reminderPreset
     }
 
     static func fetchOrCreate(in context: ModelContext) -> AppSettings {
@@ -93,6 +118,16 @@ final class AppSettings {
         context.insert(settings)
         return settings
     }
+}
+
+/// `AppSettings.quietMode`'s meaning (V2-T4).
+enum QuietMode: Int, CaseIterable {
+    case off = 0
+    case manual = 1
+    /// `quietStartMin`/`quietEndMin` are kept in sync with the most recent
+    /// HealthKit-derived sleep window (see `SleepScheduleReader`) rather
+    /// than user-picked times.
+    case sleep = 2
 }
 
 extension ModelContainer {

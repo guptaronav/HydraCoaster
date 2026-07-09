@@ -38,10 +38,28 @@ struct SettingsView: View {
                 }
             }
 
+            if let settings {
+                QuietHoursSection(
+                    quietMode: binding(settings, \.quietMode),
+                    quietStartMin: binding(settings, \.quietStartMin),
+                    quietEndMin: binding(settings, \.quietEndMin),
+                    respectFocus: binding(settings, \.respectFocus),
+                    sleepScheduleReader: appServices.sleepScheduleReader,
+                    onQuietSettingsChanged: { appServices.quietSettingsDidChange() }
+                )
+            }
+
             Section {
                 Toggle("Sound", isOn: prefsBinding(\.soundOn))
                 Toggle("Light", isOn: prefsBinding(\.ledOn))
                 Toggle("Reminders", isOn: prefsBinding(\.remindOn))
+
+                Picker("Reminder frequency", selection: presetBinding) {
+                    Text("Gentle").tag(ReminderPreset.gentle.rawValue)
+                    Text("Standard").tag(ReminderPreset.standard.rawValue)
+                    Text("Persistent").tag(ReminderPreset.persistent.rawValue)
+                }
+                .pickerStyle(.segmented)
 
                 Button {
                     client.sendCommand(.buzz)
@@ -135,6 +153,22 @@ struct SettingsView: View {
                     // "reminders off" from the user's point of view.
                     appServices.remindPreferenceDidChange()
                 }
+            }
+        )
+    }
+
+    /// Reminder frequency preset (V2-T4): local save + a D005 rewrite, no
+    /// direct BLE call here — `reminderPresetDidChange()` reads the setting
+    /// back through its own closure (see AppServices) and applies it
+    /// against the last weather base.
+    private var presetBinding: Binding<Int> {
+        Binding(
+            get: { settings?.reminderPreset ?? ReminderPreset.standard.rawValue },
+            set: { newValue in
+                guard let settings else { return }
+                settings.reminderPreset = newValue
+                try? modelContext.save()
+                appServices.reminderPresetDidChange()
             }
         )
     }

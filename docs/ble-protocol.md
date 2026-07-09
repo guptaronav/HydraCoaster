@@ -80,6 +80,36 @@ Results are reported on D008.
 `uint8 last_cmd`, `uint8 result`: 0 = ok, 1 = no signal (not settled),
 2 = load too small / check wiring, 3 = bad command.
 
+### D009 — Quiet Window (read, write) — 4 bytes
+
+| offset | type | field |
+|---|---|---|
+| 0 | uint16 | start_min — minutes-of-day, **UTC** |
+| 2 | uint16 | end_min — minutes-of-day, **UTC** |
+
+The coaster must not buzz overnight, but the firmware clock is UTC (D004
+writes Unix UTC seconds) while quiet hours are a local-wall-clock concept —
+so the **phone** converts local quiet hours to UTC minutes-of-day at write
+time and re-writes on every connect plus every weather refresh (~30 min
+cadence). That keeps DST and timezone changes self-correcting within one
+connect/refresh cycle instead of the firmware ever handling an offset.
+
+`start_min == end_min` (canonically `0,0`) means disabled — a zero-length
+window can't contain any moment, so this needs no separate "enabled" flag.
+Values `> 1439` on either field → the write is rejected (ignored), mirroring
+D005's clamp-reject: the characteristic keeps its last-good value. Persisted
+in NVS; default `0,0` (disabled) until the phone's first write.
+
+Window may wrap midnight (`start_min > end_min`, e.g. `1380..420` for
+23:00-07:00 UTC) — see `lib/quietwin/quietwin.h`.
+
+Gates the reminder alert only (see below) — never `brain.reminderDue()`
+itself, which stays clock-agnostic. A reminder suppressed by the quiet
+window is **not** acknowledged, so the first check after the window ends
+fires it normally. If the window is enabled but the clock has never synced,
+quiet hours can't be evaluated and are ignored (reminders behave as if the
+window were disabled).
+
 ### Battery — standard service `0x180F`, char `0x2A19` (read, notify)
 
 Percent from the Feather's MAX17048 fuel gauge. If the gauge is absent or
@@ -97,3 +127,8 @@ Reminder: alert per prefs when `now - last_drink ≥ interval x behavior`,
 repeat at most every 300 s. **Behavior factor**: 1.5 if total consumed in the
 trailing 60 min ≥ 250 g, else 1.0 (replaces the old dashboard "session"
 concept).
+
+Quiet-window gating (D009) is orchestration in `main.cpp`'s `loop()`, not
+brain logic: when the brain says a reminder is due, `main.cpp` only fires
+the alert (and calls `acknowledgeReminder()`) if the current UTC time is
+outside an enabled, clock-synced quiet window.

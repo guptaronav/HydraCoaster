@@ -152,6 +152,33 @@ final class WeatherService {
         let seconds = (1200.0 * factor).rounded()
         return UInt16(seconds.clamped(to: 60...14400))
     }
+
+    /// Reminder-frequency preset (V2-T4) applied on top of the
+    /// weather-adjusted interval before it's written to D005. Same
+    /// [60, 14400] clamp as `intervalSeconds(factor:)` — a preset can't push
+    /// the interval outside what the coaster itself will accept.
+    nonisolated static func scaledIntervalS(base: UInt16, preset: ReminderPreset) -> UInt16 {
+        let seconds = (Double(base) * preset.multiplier).rounded()
+        return UInt16(seconds.clamped(to: 60...14400))
+    }
+}
+
+/// `AppSettings.reminderPreset`'s meaning (V2-T4): how strongly the coaster
+/// (and its phone mirror) nags. Multiplies the weather-adjusted D005
+/// interval the same way the firmware's own behavior factor multiplies it —
+/// bigger multiplier, less frequent reminders.
+enum ReminderPreset: Int, CaseIterable {
+    case gentle = 0
+    case standard = 1
+    case persistent = 2
+
+    var multiplier: Double {
+        switch self {
+        case .gentle: 1.5
+        case .standard: 1.0
+        case .persistent: 0.6
+        }
+    }
 }
 
 private let weatherRefreshInterval: Duration = .seconds(30 * 60)

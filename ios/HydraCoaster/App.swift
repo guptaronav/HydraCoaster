@@ -33,7 +33,20 @@ struct HydraCoasterApp: App {
             client: client,
             syncEngine: engine,
             store: store,
-            isRemindEnabled: { AppSettings.fetchOrCreate(in: context).remindOn }
+            isRemindEnabled: { AppSettings.fetchOrCreate(in: context).remindOn },
+            quietHours: {
+                let s = AppSettings.fetchOrCreate(in: context)
+                return QuietHoursSettings(mode: s.quietMode, startMin: s.quietStartMin, endMin: s.quietEndMin)
+            },
+            reminderPreset: { AppSettings.fetchOrCreate(in: context).reminderPreset },
+            respectFocus: { AppSettings.fetchOrCreate(in: context).respectFocus },
+            isFocused: { FocusStatusGate.isFocused },
+            saveSleepDerivedWindow: { startMin, endMin in
+                let s = AppSettings.fetchOrCreate(in: context)
+                s.quietStartMin = startMin
+                s.quietEndMin = endMin
+                try? context.save()
+            }
         )
         _appServices = State(initialValue: services)
 
@@ -46,6 +59,14 @@ struct HydraCoasterApp: App {
             if let seq = store.loadAll().first?.seq {
                 services.reclassify(seq: seq, to: DrinkCatalog.drink(for: "coffee.latte"))
             }
+        }
+        // Screenshot aid only: `HC_QUIET_MODE=0|1|2` pre-sets Quiet Hours'
+        // mode so the gate can capture Off/Manual/Sleep without simulating
+        // the segmented control — this only sets the stored mode, it never
+        // triggers the sleep derivation's lazy HealthKit auth request.
+        if let raw = ProcessInfo.processInfo.environment["HC_QUIET_MODE"], let mode = Int(raw) {
+            AppSettings.fetchOrCreate(in: context).quietMode = mode
+            try? context.save()
         }
         #endif
     }

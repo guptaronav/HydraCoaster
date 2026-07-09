@@ -1,6 +1,18 @@
 import Foundation
 import Observation
 
+/// AppSettings' quiet-hours fields, as AppServices needs them — a plain
+/// snapshot so this file stays SwiftData-free (see `store` below for why
+/// that separation matters). `mode` is a `QuietMode` raw value;
+/// `startMin`/`endMin` are LOCAL minutes-of-day and, in sleep mode, ARE the
+/// most recently derived window (Settings/App.swift keep them in sync —
+/// AppServices never needs to know which mode produced them).
+struct QuietHoursSettings {
+    let mode: Int
+    let startMin: Int
+    let endMin: Int
+}
+
 /// T6's single composition point: wires SyncEngine's sip stream and
 /// CoasterClient's connection state to HealthKit logging, weather-adjusted
 /// D005 writes, and the mirrored reminder notification. Nothing outside
@@ -11,6 +23,10 @@ final class AppServices {
     private let client: CoasterClient
     private let reminderScheduler: ReminderScheduler
     let weatherService: WeatherService // exposed for the DEBUG panel
+    /// Exposed so Settings can request auth + preview-derive the sleep
+    /// window interactively; AppServices uses the same instance for its own
+    /// background refresh (see `refreshSleepDerivedWindowIfNeeded`).
+    let sleepScheduleReader: SleepScheduleReader
     private let healthKitLogger: HealthKitLogger
     /// Same storage seam SyncEngine writes through — needed here to persist
     /// the HealthKit UUID once a write confirms, and to read/update a sip
@@ -18,30 +34,60 @@ final class AppServices {
     /// inserts.
     private let store: SipEventStoring
 
-    /// Current D005 value (behavior-free). Starts at the firmware default
-    /// and only moves once weather is enabled and a fetch succeeds.
+    /// Weather's own output (behavior- and preset-free) — kept separately
+    /// from `intervalS` so a preset change can rewrite D005 without waiting
+    /// on the next weather tick.
+    private var weatherBaseIntervalS: UInt16 = 1200
+    /// Current D005 value: weather base × reminder preset, clamped. This is
+    /// also what the phone mirror (`nextReminderDate`) scales by — the
+    /// mirror and the coaster's own D005 always agree on cadence.
     private var intervalS: UInt16 = 1200
     /// Local mirror of stored sips, seeded once from `store` and kept in
     /// sync via `onNewSip` — avoids re-querying SwiftData on every
     /// reschedule (and keeps SwiftData out of anything but the initial load).
     private var sips: [SipRecord]
+    private var sleepRefreshTask: Task<Void, Never>?
+
     /// Reads the user's Reminders toggle (AppSettings.remindOn) — off
     /// silences the coaster (D006 remind bit) AND this phone mirror; a user
     /// who turns reminders off has turned reminders off. Init parameter
     /// (not set-after-init) so the app-start reschedule already respects it.
     private let isRemindEnabled: () -> Bool
+    private let quietHours: () -> QuietHoursSettings
+    private let reminderPreset: () -> Int
+    private let respectFocus: () -> Bool
+    /// Wraps `FocusStatusGate.isFocused` in production; a fake in tests —
+    /// keeps the Intents framework out of the test process, same reasoning
+    /// as `SipEventStoring` keeping SwiftData out.
+    private let isFocused: () -> Bool
+    /// Persists a freshly derived sleep window back into AppSettings (only
+    /// meaningful while `quietHours().mode == QuietMode.sleep.rawValue`) —
+    /// the one point this file writes AppSettings, funneled through a
+    /// closure for the same reason `isRemindEnabled` reads it through one.
+    private let saveSleepDerivedWindow: (Int, Int) -> Void
 
     init(
         client: CoasterClient,
         syncEngine: SyncEngine,
         store: SipEventStoring,
-        isRemindEnabled: @escaping () -> Bool = { true }
+        isRemindEnabled: @escaping () -> Bool = { true },
+        quietHours: @escaping () -> QuietHoursSettings = { QuietHoursSettings(mode: 0, startMin: 0, endMin: 0) },
+        reminderPreset: @escaping () -> Int = { ReminderPreset.standard.rawValue },
+        respectFocus: @escaping () -> Bool = { false },
+        isFocused: @escaping () -> Bool = { false },
+        saveSleepDerivedWindow: @escaping (Int, Int) -> Void = { _, _ in }
     ) {
         self.client = client
         self.reminderScheduler = ReminderScheduler()
         self.weatherService = WeatherService()
+        self.sleepScheduleReader = SleepScheduleReader()
         self.healthKitLogger = HealthKitLogger()
         self.isRemindEnabled = isRemindEnabled
+        self.quietHours = quietHours
+        self.reminderPreset = reminderPreset
+        self.respectFocus = respectFocus
+        self.isFocused = isFocused
+        self.saveSleepDerivedWindow = saveSleepDerivedWindow
         self.store = store
         self.sips = store.loadAll()
 
@@ -58,6 +104,8 @@ final class AppServices {
 
         watchConnection()
         rescheduleReminder() // once at app start, from stored sips
+        Task { @MainActor [weak self] in await self?.refreshSleepDerivedWindowIfNeeded() }
+        startDailySleepRefresh()
     }
 
     /// Notification auth then HealthKit auth, sequential and best-effort.
@@ -72,6 +120,29 @@ final class AppServices {
     /// pending mirror notification immediately, on reschedules from current
     /// state.
     func remindPreferenceDidChange() {
+        rescheduleReminder()
+    }
+
+    /// Called from Settings whenever a Quiet Hours field changes (mode,
+    /// manual times, or a freshly derived sleep window): rewrites D009 and
+    /// reschedules the phone mirror to match.
+    func quietSettingsDidChange() {
+        writeQuietWindow()
+        rescheduleReminder()
+    }
+
+    /// Called from Settings when the reminder-frequency preset changes:
+    /// rewrites D005 against the last weather base (no need to wait for the
+    /// next weather tick) and reschedules the phone mirror.
+    func reminderPresetDidChange() {
+        applyPresetAndWrite()
+    }
+
+    /// Best-effort Focus re-check (V2-T4): Focus status isn't observed via a
+    /// delegate (see `FocusStatusGate`'s doc comment) — re-evaluating here,
+    /// on every foreground, is the cheap substitute. Call from RootView's
+    /// `scenePhase` observer.
+    func appDidBecomeActive() {
         rescheduleReminder()
     }
 
@@ -125,9 +196,61 @@ final class AppServices {
     }
 
     private func handleWeatherUpdate(_ seconds: UInt16) {
-        intervalS = seconds
-        client.write(interval: seconds)
+        weatherBaseIntervalS = seconds
+        applyPresetAndWrite()
+        writeQuietWindow() // same 30-min cadence hook re-derives the UTC window (DST/tz drift)
+    }
+
+    /// Scales `weatherBaseIntervalS` by the current reminder preset, writes
+    /// the result to D005, and reschedules the phone mirror — shared by a
+    /// fresh weather reading and an explicit preset change.
+    private func applyPresetAndWrite() {
+        let preset = ReminderPreset(rawValue: reminderPreset()) ?? .standard
+        intervalS = WeatherService.scaledIntervalS(base: weatherBaseIntervalS, preset: preset)
+        client.write(interval: intervalS)
         rescheduleReminder()
+    }
+
+    /// Converts the effective quiet window to UTC and writes D009. Mode off
+    /// (or a degenerate manual window with equal start/end) writes literal
+    /// `0,0`, matching the wire convention exactly rather than relying on
+    /// callers to notice that any equal-valued pair behaves the same way.
+    private func writeQuietWindow() {
+        let window = effectiveQuietWindow()
+        guard window.start != window.end else {
+            client.write(quietWindowStartMin: 0, endMin: 0)
+            return
+        }
+        let utc = localMinutesToUTCMinutes(startMin: window.start, endMin: window.end, at: Date())
+        client.write(quietWindowStartMin: utc.start, endMin: utc.end)
+    }
+
+    /// `(0, 0)` when the mode is off; otherwise the stored local minutes
+    /// (which, in sleep mode, are the most recently derived window).
+    private func effectiveQuietWindow() -> (start: Int, end: Int) {
+        let qh = quietHours()
+        guard qh.mode != QuietMode.off.rawValue else { return (0, 0) }
+        return (qh.startMin, qh.endMin)
+    }
+
+    /// Re-derives the sleep-based quiet window and persists it, but only
+    /// while sleep mode is actually selected — a no-op otherwise, so it's
+    /// safe to call unconditionally from app start and the daily loop.
+    private func refreshSleepDerivedWindowIfNeeded() async {
+        guard quietHours().mode == QuietMode.sleep.rawValue else { return }
+        guard let window = await sleepScheduleReader.deriveWindow() else { return }
+        saveSleepDerivedWindow(window.startMin, window.endMin)
+        writeQuietWindow()
+        rescheduleReminder()
+    }
+
+    private func startDailySleepRefresh() {
+        sleepRefreshTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(24 * 60 * 60))
+                await self?.refreshSleepDerivedWindowIfNeeded()
+            }
+        }
     }
 
     /// Mirrors SyncEngine's own `withObservationTracking` re-arm pattern
@@ -149,6 +272,7 @@ final class AppServices {
             return
         }
         weatherService.start() // fetches immediately, then every 30 min
+        writeQuietWindow() // next to the interval write — see writeQuietWindow's callers
         rescheduleReminder()
     }
 
@@ -157,11 +281,23 @@ final class AppServices {
             reminderScheduler.cancel()
             return
         }
+        // Best-effort Focus (V2-T4): no delegate for focus-change events, so
+        // this and the app-foreground re-check (appDidBecomeActive) are the
+        // only times this gets re-evaluated. Cancelling rather than
+        // "deferring" is deliberate — there's no future timer to wake up
+        // and reschedule once Focus ends, only the next natural trigger
+        // (new sip, reconnect, weather tick, or foreground).
+        if respectFocus(), isFocused() {
+            reminderScheduler.cancel()
+            return
+        }
         let lastSip = sips.map(\.date).max()
         guard let date = nextReminderDate(lastSip: lastSip, sips: sips, intervalS: intervalS, now: Date()), let lastSip else {
             reminderScheduler.cancel()
             return
         }
-        reminderScheduler.reschedule(at: date, lastSip: lastSip)
+        let window = effectiveQuietWindow()
+        let adjusted = applyQuietWindow(date: date, startMin: window.start, endMin: window.end)
+        reminderScheduler.reschedule(at: adjusted, lastSip: lastSip)
     }
 }

@@ -30,6 +30,7 @@
 #include <cmath>
 
 #include "brain.h"
+#include "quietwin.h"
 
 #ifdef HYDRA_WIFI_OTA
 #include <WiFi.h>
@@ -51,6 +52,7 @@ static const char *CHR_INTERV_UUID = "AD0BD005-2A44-4E5B-9C8B-4B1E7C0D5E2A";
 static const char *CHR_PREFS_UUID  = "AD0BD006-2A44-4E5B-9C8B-4B1E7C0D5E2A";
 static const char *CHR_CMD_UUID    = "AD0BD007-2A44-4E5B-9C8B-4B1E7C0D5E2A";
 static const char *CHR_STATUS_UUID = "AD0BD008-2A44-4E5B-9C8B-4B1E7C0D5E2A";
+static const char *CHR_QUIET_UUID  = "AD0BD009-2A44-4E5B-9C8B-4B1E7C0D5E2A";
 
 // ── Notification hardware (verbatim pattern from test_nau/main.cpp) ─────────
 static constexpr uint8_t  BUZZER_PIN    = 7;
@@ -90,6 +92,9 @@ static constexpr uint16_t INTERVAL_MAX     = 14400;
 static constexpr uint8_t  PREFS_DEFAULT    = 0b111;
 static constexpr uint8_t  PREFS_MASK       = 0b111; // b0 sound, b1 led, b2 reminders
 
+// D009 Quiet Window — minutes-of-day, UTC (docs/ble-protocol.md).
+static constexpr uint16_t QUIET_MINUTE_MAX = 1439;
+
 // ── Sip ring buffer — persisted as one raw-struct blob (internal format,
 // not the wire format; see notifySipRecord() for the 10-byte wire packet). ──
 static constexpr size_t   RING_CAP   = 64;
@@ -122,6 +127,8 @@ static bool              batteryOk = false;
 
 static uint16_t reminderIntervalS = INTERVAL_DEFAULT;
 static uint8_t  prefsByte         = PREFS_DEFAULT;
+static uint16_t quietStartMin     = 0; // 0,0 = disabled until the phone writes D009
+static uint16_t quietEndMin       = 0;
 
 static NimBLECharacteristic *chrWeight   = nullptr;
 static NimBLECharacteristic *chrSipLog   = nullptr;
@@ -131,6 +138,7 @@ static NimBLECharacteristic *chrPrefsCh  = nullptr;
 static NimBLECharacteristic *chrCommand  = nullptr;
 static NimBLECharacteristic *chrStatus   = nullptr;
 static NimBLECharacteristic *chrBattery  = nullptr;
+static NimBLECharacteristic *chrQuiet    = nullptr;
 
 static int32_t latestRaw = 0;
 static bool    haveRaw   = false;
@@ -154,6 +162,21 @@ static volatile uint32_t backfillFromSeq = 0;
 
 // ── Small helpers ────────────────────────────────────────────────────────────
 static bool clockSynced() { return time(nullptr) > 1'000'000'000L; }
+
+// Current UTC minute-of-day, for comparing against D009 (also UTC).
+static uint16_t utcMinuteOfDay() {
+    time_t now = time(nullptr);
+    struct tm utc;
+    gmtime_r(&now, &utc);
+    return static_cast<uint16_t>(utc.tm_hour * 60 + utc.tm_min);
+}
+
+// False whenever the window can't be evaluated (unsynced clock) or is
+// disabled (quietStartMin == quietEndMin, see quietwin.h) — reminders then
+// behave exactly as they did before D009 existed.
+static bool quietWindowActive() {
+    return clockSynced() && hydra::quietwin::inQuietWindow(utcMinuteOfDay(), quietStartMin, quietEndMin);
+}
 
 static int16_t clampI16(long v) {
     if (v > INT16_MAX) return INT16_MAX;
@@ -344,6 +367,23 @@ class GattCallbacks : public NimBLECharacteristicCallbacks {
             prefsByte = data[0] & PREFS_MASK;
             prefs.putUChar("prefs", prefsByte);
             chrPrefsCh->setValue(&prefsByte, 1);
+        } else if (c == chrQuiet && len >= 4) {
+            // Same clamp-reject shape as chrInterval above: two aligned
+            // uint16 globals + NVS, no brain/ring involved, safe inline.
+            uint16_t s, e;
+            memcpy(&s, data, 2);
+            memcpy(&e, data + 2, 2);
+            if (s <= QUIET_MINUTE_MAX && e <= QUIET_MINUTE_MAX) {
+                quietStartMin = s;
+                quietEndMin   = e;
+                prefs.putUShort("qstart", s);
+                prefs.putUShort("qend", e);
+            } else {
+                uint8_t buf[4];
+                memcpy(buf, &quietStartMin, 2);
+                memcpy(buf + 2, &quietEndMin, 2);
+                chrQuiet->setValue(buf, sizeof(buf));
+            }
         } else if (c == chrCommand) {
             handleCommand(data, len);
         } else if (c == chrSipLog && len >= 4) {
@@ -372,17 +412,23 @@ static void setupBLE() {
     chrPrefsCh  = svc->createCharacteristic(CHR_PREFS_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
     chrCommand  = svc->createCharacteristic(CHR_CMD_UUID, NIMBLE_PROPERTY::WRITE);
     chrStatus   = svc->createCharacteristic(CHR_STATUS_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
+    chrQuiet    = svc->createCharacteristic(CHR_QUIET_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
 
     chrSipLog->setCallbacks(&gattCallbacks);
     chrTime->setCallbacks(&gattCallbacks);
     chrInterval->setCallbacks(&gattCallbacks);
     chrPrefsCh->setCallbacks(&gattCallbacks);
     chrCommand->setCallbacks(&gattCallbacks);
+    chrQuiet->setCallbacks(&gattCallbacks);
 
     chrInterval->setValue(reinterpret_cast<uint8_t *>(&reminderIntervalS), 2);
     chrPrefsCh->setValue(&prefsByte, 1);
     uint8_t statusInit[2] = {0, 0};
     chrStatus->setValue(statusInit, 2);
+    uint8_t quietInit[4];
+    memcpy(quietInit, &quietStartMin, 2);
+    memcpy(quietInit + 2, &quietEndMin, 2);
+    chrQuiet->setValue(quietInit, sizeof(quietInit));
 
     NimBLEService *battSvc = server->createService(NimBLEUUID(static_cast<uint16_t>(0x180F)));
     chrBattery = battSvc->createCharacteristic(NimBLEUUID(static_cast<uint16_t>(0x2A19)),
@@ -489,6 +535,12 @@ void setup() {
     if (reminderIntervalS < INTERVAL_MIN || reminderIntervalS > INTERVAL_MAX) {
         reminderIntervalS = INTERVAL_DEFAULT;
     }
+    quietStartMin = prefs.getUShort("qstart", 0);
+    quietEndMin   = prefs.getUShort("qend", 0);
+    if (quietStartMin > QUIET_MINUTE_MAX || quietEndMin > QUIET_MINUTE_MAX) {
+        quietStartMin = 0;
+        quietEndMin   = 0;
+    }
     loadRing();
     bootStartSeq = ringBlob.nextSeq;
 
@@ -565,9 +617,21 @@ void loop() {
         // channels off, alert() would burn ~1 s doing nothing.
         bool remindersEnabled = (prefsByte & 0x04) && (prefsByte & 0x03);
         if (remindersEnabled && brain.reminderDue(nowMs, reminderIntervalS)) {
-            alert(prefsByte & 0x01, prefsByte & 0x02);
-            brain.acknowledgeReminder(nowMs);
-            Serial.println(">> Reminder fired");
+            if (quietWindowActive()) {
+                // Not acknowledged — brain.reminderDue() stays true, so the
+                // first check once the window ends fires it normally. Rate
+                // limit the log to the same cadence reminders themselves
+                // repeat at, so a whole quiet night doesn't spam Serial.
+                static uint64_t lastQuietLogMs = 0;
+                if (nowMs - lastQuietLogMs >= static_cast<uint64_t>(hydra::REMIND_REPEAT_S) * 1000ULL) {
+                    Serial.println(">> Reminder suppressed by quiet window");
+                    lastQuietLogMs = nowMs;
+                }
+            } else {
+                alert(prefsByte & 0x01, prefsByte & 0x02);
+                brain.acknowledgeReminder(nowMs);
+                Serial.println(">> Reminder fired");
+            }
         }
 
         Serial.printf("raw=%9ld   grams=%8.1f   settled=%d cup=%d\n",
