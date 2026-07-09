@@ -56,7 +56,7 @@
 		060B40674C52C3525B24AC48 /* PairStep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairStep.swift; sourceTree = "<group>"; };
 		0F9954614A9C47ACB6069D5D /* GoalPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalPicker.swift; sourceTree = "<group>"; };
 		11E4E766722E42B686462BED /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		1AE79817CA19EF3725B21098 /* HydraCoaster.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HydraCoaster.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1AE79817CA19EF3725B21098 /* HydraCoaster.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HydraCoaster.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2896DC92CA10A88469838585 /* DailyTotals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyTotals.swift; sourceTree = "<group>"; };
 		2F1839894BBAC42EC180FFC7 /* RecalibrateReducer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecalibrateReducer.swift; sourceTree = "<group>"; };
 		3A123027FDC7E499C4735C60 /* SipListSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SipListSection.swift; sourceTree = "<group>"; };
@@ -73,7 +73,7 @@
 		6BB614A61B391F117469B9F8 /* CoasterProtocolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoasterProtocolTests.swift; sourceTree = "<group>"; };
 		71CD8A3208C36C571BF46B13 /* HydraCoaster.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HydraCoaster.entitlements; sourceTree = "<group>"; };
 		842924407C5D1BCF494B7C55 /* HealthKitLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitLogger.swift; sourceTree = "<group>"; };
-		85DB0C5E3EF349CBFACC5700 /* HydraCoasterTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HydraCoasterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		85DB0C5E3EF349CBFACC5700 /* HydraCoasterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HydraCoasterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		88736394D9774C1DFF87FF6A /* SyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncEngine.swift; sourceTree = "<group>"; };
 		96D27588433F792039DE01CB /* CoasterProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoasterProtocol.swift; sourceTree = "<group>"; };
 		9B7E966E93F62AB45397ECB0 /* ReminderSchedulerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderSchedulerTests.swift; sourceTree = "<group>"; };
@@ -272,8 +272,12 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 1620;
 				TargetAttributes = {
+					8CA05B0E25AED6DC601823BE = {
+						DevelopmentTeam = LPU8C59HD4;
+						ProvisioningStyle = Automatic;
+					};
 				};
 			};
 			buildConfigurationList = 62BC3D25FE26644437F2CFF6 /* Build configuration list for PBXProject "HydraCoaster" */;
@@ -405,12 +409,11 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGNING_REQUIRED = NO;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -444,6 +447,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = HydraCoaster/HydraCoaster.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = LPU8C59HD4;
 				INFOPLIST_FILE = HydraCoaster/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -462,6 +467,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = HydraCoaster/HydraCoaster.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = LPU8C59HD4;
 				INFOPLIST_FILE = HydraCoaster/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -506,12 +513,11 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGNING_REQUIRED = NO;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;

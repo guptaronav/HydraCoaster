@@ -4,6 +4,7 @@ import SwiftUI
 /// intentionally a plain List, no styling investment.
 struct ConnectionDebugView: View {
     var client: CoasterClient
+    @Environment(WeatherService.self) private var weather
 
     var body: some View {
         List {
@@ -32,6 +33,24 @@ struct ConnectionDebugView: View {
                 Section("Last Command") {
                     LabeledContent("Command", value: "\(status.lastCommand)")
                     LabeledContent("Result", value: "\(status.result)")
+                }
+            }
+
+            Section("Weather") {
+                if !weather.isEnabled {
+                    Text("Disabled — no OWM key configured")
+                        .foregroundStyle(.secondary)
+                } else if let reading = weather.lastReading {
+                    LabeledContent("Temperature", value: String(format: "%.1f °C", reading.tempC))
+                    LabeledContent("Humidity", value: String(format: "%.0f%%", reading.humidity))
+                    LabeledContent("Factor", value: String(format: "%.2f", weather.lastFactor ?? 1.0))
+                    LabeledContent("Interval", value: "\(weather.lastInterval ?? 0) s")
+                    if let fetchedAt = weather.lastFetchAt {
+                        LabeledContent("Fetched", value: fetchedAt.formatted(date: .omitted, time: .standard))
+                    }
+                } else {
+                    Text("No fetch yet — fetches on coaster connect")
+                        .foregroundStyle(.secondary)
                 }
             }
 

@@ -108,6 +108,7 @@ final class CoasterClient: NSObject {
     }
 
     func requestBackfill(after seq: UInt32) {
+        logger.info("requesting backfill after seq=\(seq)")
         write(CoasterEncode.sipBackfillRequest(afterSeq: seq), to: GATT.sipLog)
     }
 
@@ -251,6 +252,14 @@ extension CoasterClient: CBPeripheralDelegate {
         }
     }
 
+    func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
+        if let error {
+            logger.error("subscribe FAILED for \(characteristic.uuid): \(error.localizedDescription)")
+        } else {
+            logger.info("subscribed: \(characteristic.uuid), notifying=\(characteristic.isNotifying)")
+        }
+    }
+
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         guard error == nil, let data = characteristic.value else { return }
         switch characteristic.uuid {
@@ -260,7 +269,10 @@ extension CoasterClient: CBPeripheralDelegate {
             }
         case GATT.sipLog:
             if let packet = CoasterDecode.sipPacket(from: data) {
+                logger.info("sip packet: seq=\(packet.seq) ts=\(packet.unixTs) grams=\(packet.grams)")
                 sipContinuation.yield(packet)
+            } else {
+                logger.error("sip packet decode failed, \(data.count) bytes")
             }
         case GATT.status:
             if let status = CoasterDecode.commandStatus(from: data) {

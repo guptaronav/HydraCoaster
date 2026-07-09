@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import os
 
 /// One recorded sip, mirroring a `SipPacket` from the coaster's Sip Log
 /// characteristic. `seq` is the coaster's monotonic packet sequence number —
@@ -87,6 +88,11 @@ final class SwiftDataSipStore: SipEventStoring {
             isEstimatedDate: record.isEstimatedDate
         )
         modelContext.insert(sip)
-        try? modelContext.save()
+        do {
+            try modelContext.save()
+        } catch {
+            Logger(subsystem: "com.ronav.HydraCoaster", category: "SipStore")
+                .error("save failed for seq=\(record.seq): \(error)")
+        }
     }
 }

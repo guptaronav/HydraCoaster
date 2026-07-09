@@ -32,14 +32,20 @@ struct WeatherConfig {
 /// behavior factor (the coaster adds its own on top; the phone's mirrored
 /// reminder adds its own separately in ReminderScheduler). Disabled
 /// entirely — no network calls, no writes — when `WeatherConfig` is nil.
+@Observable
+@MainActor
 final class WeatherService {
     struct Reading: Equatable {
         let tempC: Double
         let humidity: Double
     }
 
-    private static let refreshInterval: Duration = .seconds(30 * 60)
-    private static let endpoint = "https://api.openweathermap.org/data/2.5/weather"
+    // Last successful fetch, for the debug panel.
+    private(set) var lastReading: Reading?
+    private(set) var lastFactor: Double?
+    private(set) var lastInterval: UInt16?
+    private(set) var lastFetchAt: Date?
+    var isEnabled: Bool { config != nil }
 
     private let config: WeatherConfig?
     private let logger = Logger(subsystem: "com.ronav.HydraCoaster", category: "WeatherService")
@@ -66,7 +72,7 @@ final class WeatherService {
         loopTask = Task { [weak self] in
             while !Task.isCancelled {
                 await self?.tick(config: config)
-                try? await Task.sleep(for: Self.refreshInterval)
+                try? await Task.sleep(for: weatherRefreshInterval)
             }
         }
     }
@@ -85,11 +91,16 @@ final class WeatherService {
             return
         }
         let factor = Self.factor(tempC: reading.tempC, humidity: reading.humidity)
-        onWeatherUpdate?(Self.intervalSeconds(factor: factor))
+        let interval = Self.intervalSeconds(factor: factor)
+        lastReading = reading
+        lastFactor = factor
+        lastInterval = interval
+        lastFetchAt = Date()
+        onWeatherUpdate?(interval)
     }
 
-    private static func fetchData(config: WeatherConfig) async -> Data? {
-        var components = URLComponents(string: endpoint)!
+    private nonisolated static func fetchData(config: WeatherConfig) async -> Data? {
+        var components = URLComponents(string: weatherEndpoint)!
         components.queryItems = [
             URLQueryItem(name: "lat", value: String(config.lat)),
             URLQueryItem(name: "lon", value: String(config.lon)),
@@ -108,7 +119,7 @@ final class WeatherService {
     /// Pulls only `main.temp` and `main.humidity` — everything else in the
     /// OWM response is ignored (and Decodable ignores unknown keys, so
     /// there's nothing else to opt out of).
-    static func decode(_ data: Data) -> Reading? {
+    nonisolated static func decode(_ data: Data) -> Reading? {
         struct Response: Decodable {
             struct Main: Decodable {
                 let temp: Double
@@ -122,7 +133,7 @@ final class WeatherService {
 
     /// Same thresholds as firmware/Python: hot cuts the interval hard, dry
     /// cuts it further on top.
-    static func factor(tempC: Double?, humidity: Double?) -> Double {
+    nonisolated static func factor(tempC: Double?, humidity: Double?) -> Double {
         var factor = 1.0
         if let tempC {
             if tempC >= 30 {
@@ -137,11 +148,14 @@ final class WeatherService {
         return factor
     }
 
-    static func intervalSeconds(factor: Double) -> UInt16 {
+    nonisolated static func intervalSeconds(factor: Double) -> UInt16 {
         let seconds = (1200.0 * factor).rounded()
         return UInt16(seconds.clamped(to: 60...14400))
     }
 }
+
+private let weatherRefreshInterval: Duration = .seconds(30 * 60)
+private let weatherEndpoint = "https://api.openweathermap.org/data/2.5/weather"
 
 private extension Double {
     func clamped(to range: ClosedRange<Double>) -> Double {

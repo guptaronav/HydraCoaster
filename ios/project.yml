@@ -6,8 +6,6 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.9"
-    CODE_SIGNING_REQUIRED: "NO"
-    CODE_SIGNING_ALLOWED: "NO"
 targets:
   HydraCoaster:
     type: application
@@ -37,6 +35,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ronav.HydraCoaster
         TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: LPU8C59HD4
     scheme:
       testTargets:
         - HydraCoasterTests

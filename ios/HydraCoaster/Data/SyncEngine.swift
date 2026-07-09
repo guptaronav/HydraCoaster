@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import os
 
 /// What SyncEngine needs from a coaster connection. `CoasterClient` conforms
 /// (see the extension at the bottom of CoasterClient.swift) — kept as a
@@ -62,9 +63,15 @@ final class SyncEngine {
     }
 
     /// Wires the engine to a live client: consumes its sip stream and
-    /// requests backfill on every transition to connected. Safe to call more
-    /// than once — cancels any prior consumption task first.
+    /// requests backfill on every transition to connected.
+    ///
+    /// Idempotent for the same source, and that matters: TodayView's `.task`
+    /// re-fires on every re-appear (tab switch, navigation push/pop), and
+    /// cancelling the consumer of an AsyncStream FINISHES the stream — a
+    /// second consumption attempt then terminates immediately and every
+    /// subsequent packet is silently dropped. One source, one consumer, once.
     func start(with source: SipSource) {
+        guard source !== self.source else { return }
         self.source = source
         consumeTask?.cancel()
         consumeTask = Task { @MainActor [weak self] in
@@ -102,7 +109,13 @@ final class SyncEngine {
         guard !packet.isTerminator else { return }
 
         let seq = Int(packet.seq)
-        guard !knownSeqs.contains(seq) else { return }
+        guard !knownSeqs.contains(seq) else {
+            Logger(subsystem: "com.ronav.HydraCoaster", category: "SyncEngine")
+                .info("ingest: seq=\(seq) already known, skipped")
+            return
+        }
+        Logger(subsystem: "com.ronav.HydraCoaster", category: "SyncEngine")
+            .info("ingest: storing seq=\(seq) grams=\(packet.grams)")
 
         let date: Date
         let isEstimatedDate: Bool

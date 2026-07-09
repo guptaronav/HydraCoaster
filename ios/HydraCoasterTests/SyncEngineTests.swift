@@ -19,6 +19,24 @@ private final class FakeSipStore: SipEventStoring {
     func insert(_ record: SipRecord) { records.append(record) }
 }
 
+/// Fake BLE source: hand-fed AsyncStream, records backfill requests.
+@MainActor
+private final class FakeSipSource: SipSource {
+    var isConnected = false
+    let sipEvents: AsyncStream<SipPacket>
+    private let continuation: AsyncStream<SipPacket>.Continuation
+    var backfillRequests: [UInt32] = []
+
+    init() {
+        var c: AsyncStream<SipPacket>.Continuation!
+        sipEvents = AsyncStream { c = $0 }
+        continuation = c
+    }
+
+    func requestBackfill(after seq: UInt32) { backfillRequests.append(seq) }
+    func emit(_ packet: SipPacket) { continuation.yield(packet) }
+}
+
 @MainActor
 struct SyncEngineTests {
 
@@ -26,6 +44,28 @@ struct SyncEngineTests {
         let store = FakeSipStore()
         store.records = preloaded
         return (SyncEngine(store: store), store)
+    }
+
+    /// Regression: TodayView's `.task` re-fires on every re-appear (tab
+    /// switch, navigation), calling start() again. The original start()
+    /// cancelled the prior consumer, which FINISHES the AsyncStream — every
+    /// sip after the first re-appear was silently dropped (found live on
+    /// hardware, 2026-07-08). start() must be idempotent for the same source.
+    @Test func start_calledTwiceWithSameSource_keepsConsumingSips() async {
+        let (engine, store) = makeEngine()
+        let source = FakeSipSource()
+
+        engine.start(with: source)
+        engine.start(with: source) // second re-appear — must be a no-op
+
+        source.emit(SipPacket(seq: 9, unixTs: 1_700_000_000, grams: 20.0))
+        var spins = 0
+        while store.records.isEmpty && spins < 1000 {
+            await Task.yield()
+            spins += 1
+        }
+
+        #expect(store.records.count == 1)
     }
 
     @Test func ingest_realTimestamp_insertsSipWithExactDateAndNotEstimated() {

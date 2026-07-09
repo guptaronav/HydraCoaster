@@ -10,7 +10,7 @@ import Observation
 final class AppServices {
     private let client: CoasterClient
     private let reminderScheduler: ReminderScheduler
-    private let weatherService: WeatherService
+    let weatherService: WeatherService // exposed for the DEBUG panel
     private let healthKitLogger: HealthKitLogger
 
     /// Current D005 value (behavior-free). Starts at the firmware default

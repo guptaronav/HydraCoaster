@@ -47,6 +47,7 @@ struct RootView: View {
             .tag(Tab.settings)
         }
         .tint(.hydraAccent)
+        .environment(appServices.weatherService)
         .fullScreenCover(isPresented: onboardingBinding) {
             OnboardingFlow(client: client) {
                 hasOnboarded = true
