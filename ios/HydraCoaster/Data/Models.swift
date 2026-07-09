@@ -32,12 +32,32 @@ final class AppSettings {
     var soundOn: Bool
     var ledOn: Bool
     var remindOn: Bool
+    /// Personalized-goal inputs (V2-T1). Optional/defaulted so SwiftData's
+    /// automatic lightweight migration can add them to an existing store —
+    /// see GoalCalculator for how they turn into `goalML`.
+    var weightKg: Double?
+    var heightCm: Double?
+    var activityLevel: Int = 1
+    var usePersonalizedGoal: Bool = false
 
-    init(goalML: Double = 2000, soundOn: Bool = true, ledOn: Bool = true, remindOn: Bool = true) {
+    init(
+        goalML: Double = 2000,
+        soundOn: Bool = true,
+        ledOn: Bool = true,
+        remindOn: Bool = true,
+        weightKg: Double? = nil,
+        heightCm: Double? = nil,
+        activityLevel: Int = 1,
+        usePersonalizedGoal: Bool = false
+    ) {
         self.goalML = goalML
         self.soundOn = soundOn
         self.ledOn = ledOn
         self.remindOn = remindOn
+        self.weightKg = weightKg
+        self.heightCm = heightCm
+        self.activityLevel = activityLevel
+        self.usePersonalizedGoal = usePersonalizedGoal
     }
 
     static func fetchOrCreate(in context: ModelContext) -> AppSettings {

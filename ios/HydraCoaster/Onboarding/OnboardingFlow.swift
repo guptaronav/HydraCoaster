@@ -14,6 +14,10 @@ struct OnboardingFlow: View {
 
     @State private var step: Step = Self.initialStep
     @State private var goalML: Double = 2000
+    @State private var weightKg: Double?
+    @State private var heightCm: Double?
+    @State private var activityLevel: Int = 1
+    @State private var usePersonalizedGoal = false
     @Environment(\.modelContext) private var modelContext
 
     #if DEBUG
@@ -39,7 +43,13 @@ struct OnboardingFlow: View {
                 case .pair:
                     PairStep(client: client) { step = .goal }
                 case .goal:
-                    GoalStep(goalML: $goalML) { finish() }
+                    GoalStep(
+                        goalML: $goalML,
+                        weightKg: $weightKg,
+                        heightCm: $heightCm,
+                        activityLevel: $activityLevel,
+                        usePersonalizedGoal: $usePersonalizedGoal
+                    ) { finish() }
                 }
             }
             .transition(.opacity)
@@ -62,6 +72,10 @@ struct OnboardingFlow: View {
     private func finish() {
         let settings = AppSettings.fetchOrCreate(in: modelContext)
         settings.goalML = goalML
+        settings.weightKg = weightKg
+        settings.heightCm = heightCm
+        settings.activityLevel = activityLevel
+        settings.usePersonalizedGoal = usePersonalizedGoal
         try? modelContext.save()
         onFinished()
     }

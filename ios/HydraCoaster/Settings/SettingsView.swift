@@ -12,16 +12,29 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var settings: AppSettings?
     @State private var showRecalibrate = false
+    @State private var showPersonalize = false
     @State private var buzzConfirmed = false
 
     private var isConnected: Bool { client.connectionState == .connected }
+
+    #if DEBUG
+    /// Screenshot aid only: `HC_SHOW_PERSONALIZE=1` opens the personalize
+    /// sheet at launch so the gate can capture it without simulating a tap.
+    private static var showPersonalizeAtLaunch: Bool {
+        ProcessInfo.processInfo.environment["HC_SHOW_PERSONALIZE"] == "1"
+    }
+    #endif
 
     var body: some View {
         List {
             Section("Daily Goal") {
                 if let settings {
-                    GoalPicker(goalML: goalBinding(settings))
-                        .padding(.vertical, 8)
+                    GoalPicker(
+                        goalML: binding(settings, \.goalML),
+                        isPersonalized: binding(settings, \.usePersonalizedGoal),
+                        onCalculateForMe: { showPersonalize = true }
+                    )
+                    .padding(.vertical, 8)
                 }
             }
 
@@ -64,9 +77,23 @@ struct SettingsView: View {
         .sheet(isPresented: $showRecalibrate) {
             RecalibrateFlow(client: client)
         }
+        .sheet(isPresented: $showPersonalize) {
+            if let settings {
+                PersonalGoalEditor(
+                    weightKg: binding(settings, \.weightKg),
+                    heightCm: binding(settings, \.heightCm),
+                    activityLevel: binding(settings, \.activityLevel),
+                    usePersonalizedGoal: binding(settings, \.usePersonalizedGoal),
+                    goalML: binding(settings, \.goalML)
+                )
+            }
+        }
         .task {
             settings = AppSettings.fetchOrCreate(in: modelContext)
             if isConnected { writePrefsToDevice() }
+            #if DEBUG
+            if Self.showPersonalizeAtLaunch { showPersonalize = true }
+            #endif
         }
         .onChange(of: client.connectionState) { _, newValue in
             if newValue == .connected { writePrefsToDevice() }
@@ -81,11 +108,14 @@ struct SettingsView: View {
         }
     }
 
-    private func goalBinding(_ settings: AppSettings) -> Binding<Double> {
+    /// Generic local-only binding into a settled `AppSettings` row: reads the
+    /// live value, writes it back plus a save. No BLE side effects — that's
+    /// `prefsBinding`'s job for the coaster-mirrored toggles below.
+    private func binding<Value>(_ settings: AppSettings, _ keyPath: ReferenceWritableKeyPath<AppSettings, Value>) -> Binding<Value> {
         Binding(
-            get: { settings.goalML },
+            get: { settings[keyPath: keyPath] },
             set: { newValue in
-                settings.goalML = newValue
+                settings[keyPath: keyPath] = newValue
                 try? modelContext.save()
             }
         )

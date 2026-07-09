@@ -26,15 +26,18 @@
 		7E1E7F6A32EF456FA241550C /* WeatherServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB138D839BFA35435CB3875F /* WeatherServiceTests.swift */; };
 		8D328AF6CCB4FAAA1FFD5830 /* RecalibrateReducer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F1839894BBAC42EC180FFC7 /* RecalibrateReducer.swift */; };
 		961079BC7B6792BBE3A9014A /* ConnectionHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4641ED60BF98CCE0CBCA35A9 /* ConnectionHeader.swift */; };
+		961EE2BD116DA166FF43C8FB /* GoalCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28407FAC7AC7B30001505ED9 /* GoalCalculatorTests.swift */; };
 		9B4789646250F91624D613E5 /* PairStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 060B40674C52C3525B24AC48 /* PairStep.swift */; };
 		9D16D7D4868DF7C52FCB272C /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = C81F90EB90D7EF2B73213454 /* Models.swift */; };
 		A8CA61F6B69DDA8BF0E011FA /* GoalPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F9954614A9C47ACB6069D5D /* GoalPicker.swift */; };
+		AFACD88360CE7A03E5AE978F /* GoalCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E50BD98E9EE28C657283C34C /* GoalCalculator.swift */; };
 		BE11C3A3594555B1BA1AEF51 /* CoasterClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50B83DEAF82E16691BC594FE /* CoasterClient.swift */; };
 		C224E189765575CEF1EE5F14 /* RecalibrateReducerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCC45DF7E84A6422BB0BF66C /* RecalibrateReducerTests.swift */; };
 		CBD7CBC91827B2350AE69EF4 /* SyncEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A5528E1FFD57F9FFB553102 /* SyncEngineTests.swift */; };
 		CC4565DF184D257DE1E3E40C /* DailyTotalsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E347DBBB37C57594E361CD /* DailyTotalsTests.swift */; };
 		D63666B8FEE3C4EC0B10BA74 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54725E2250A0A29AF9C5B9ED /* RootView.swift */; };
 		DAD4C6323FB31EBB032C4987 /* SyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88736394D9774C1DFF87FF6A /* SyncEngine.swift */; };
+		E11AAB25347131D5A52DC7EB /* PersonalGoalEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF4844BA3E82453F723D4C2 /* PersonalGoalEditor.swift */; };
 		E40BEEE1E8DB3E3E6953CF0A /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4F9428305D6234372DE2B8D /* App.swift */; };
 		EC6F2BC64154A078C1A1446F /* SipListSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A123027FDC7E499C4735C60 /* SipListSection.swift */; };
 		EF07B1D65E59EBCC33F752EA /* OnboardingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C42C44679E04855FBEBD503B /* OnboardingFlow.swift */; };
@@ -56,7 +59,8 @@
 		060B40674C52C3525B24AC48 /* PairStep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairStep.swift; sourceTree = "<group>"; };
 		0F9954614A9C47ACB6069D5D /* GoalPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalPicker.swift; sourceTree = "<group>"; };
 		11E4E766722E42B686462BED /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		1AE79817CA19EF3725B21098 /* HydraCoaster.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HydraCoaster.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1AE79817CA19EF3725B21098 /* HydraCoaster.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HydraCoaster.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		28407FAC7AC7B30001505ED9 /* GoalCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalCalculatorTests.swift; sourceTree = "<group>"; };
 		2896DC92CA10A88469838585 /* DailyTotals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyTotals.swift; sourceTree = "<group>"; };
 		2F1839894BBAC42EC180FFC7 /* RecalibrateReducer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecalibrateReducer.swift; sourceTree = "<group>"; };
 		3A123027FDC7E499C4735C60 /* SipListSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SipListSection.swift; sourceTree = "<group>"; };
@@ -73,7 +77,7 @@
 		6BB614A61B391F117469B9F8 /* CoasterProtocolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoasterProtocolTests.swift; sourceTree = "<group>"; };
 		71CD8A3208C36C571BF46B13 /* HydraCoaster.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HydraCoaster.entitlements; sourceTree = "<group>"; };
 		842924407C5D1BCF494B7C55 /* HealthKitLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitLogger.swift; sourceTree = "<group>"; };
-		85DB0C5E3EF349CBFACC5700 /* HydraCoasterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HydraCoasterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		85DB0C5E3EF349CBFACC5700 /* HydraCoasterTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HydraCoasterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		88736394D9774C1DFF87FF6A /* SyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncEngine.swift; sourceTree = "<group>"; };
 		96D27588433F792039DE01CB /* CoasterProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoasterProtocol.swift; sourceTree = "<group>"; };
 		9B7E966E93F62AB45397ECB0 /* ReminderSchedulerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderSchedulerTests.swift; sourceTree = "<group>"; };
@@ -86,8 +90,10 @@
 		C4F9428305D6234372DE2B8D /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		C81F90EB90D7EF2B73213454 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		CCC45DF7E84A6422BB0BF66C /* RecalibrateReducerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecalibrateReducerTests.swift; sourceTree = "<group>"; };
+		CDF4844BA3E82453F723D4C2 /* PersonalGoalEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalGoalEditor.swift; sourceTree = "<group>"; };
 		D410F3B1EDF13CB3F8456929 /* RecalibrateFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecalibrateFlow.swift; sourceTree = "<group>"; };
 		D4543064662ED135C3305086 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
+		E50BD98E9EE28C657283C34C /* GoalCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalCalculator.swift; sourceTree = "<group>"; };
 		EA7F165E3DC5F13C21546910 /* ReminderScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderScheduler.swift; sourceTree = "<group>"; };
 		F8E347DBBB37C57594E361CD /* DailyTotalsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyTotalsTests.swift; sourceTree = "<group>"; };
 		F9301DCEA0CD6722573FC54A /* GoalStep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalStep.swift; sourceTree = "<group>"; };
@@ -99,6 +105,7 @@
 			children = (
 				6BB614A61B391F117469B9F8 /* CoasterProtocolTests.swift */,
 				F8E347DBBB37C57594E361CD /* DailyTotalsTests.swift */,
+				28407FAC7AC7B30001505ED9 /* GoalCalculatorTests.swift */,
 				CCC45DF7E84A6422BB0BF66C /* RecalibrateReducerTests.swift */,
 				9B7E966E93F62AB45397ECB0 /* ReminderSchedulerTests.swift */,
 				3A5528E1FFD57F9FFB553102 /* SyncEngineTests.swift */,
@@ -139,6 +146,7 @@
 			isa = PBXGroup;
 			children = (
 				0F9954614A9C47ACB6069D5D /* GoalPicker.swift */,
+				CDF4844BA3E82453F723D4C2 /* PersonalGoalEditor.swift */,
 				D410F3B1EDF13CB3F8456929 /* RecalibrateFlow.swift */,
 				2F1839894BBAC42EC180FFC7 /* RecalibrateReducer.swift */,
 				4C4A3C7CE17840566B02938E /* SettingsView.swift */,
@@ -161,6 +169,7 @@
 			isa = PBXGroup;
 			children = (
 				B0AA61D842C9A46E947C779F /* AppServices.swift */,
+				E50BD98E9EE28C657283C34C /* GoalCalculator.swift */,
 				842924407C5D1BCF494B7C55 /* HealthKitLogger.swift */,
 				EA7F165E3DC5F13C21546910 /* ReminderScheduler.swift */,
 				5598C20A998C60337235F6D8 /* WeatherService.swift */,
@@ -272,7 +281,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1620;
+				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					8CA05B0E25AED6DC601823BE = {
 						DevelopmentTeam = LPU8C59HD4;
@@ -312,6 +321,7 @@
 				F2A736AA50BBBF9041590DE7 /* ConnectionDebugView.swift in Sources */,
 				961079BC7B6792BBE3A9014A /* ConnectionHeader.swift in Sources */,
 				660291D333D51F7DA798176F /* DailyTotals.swift in Sources */,
+				AFACD88360CE7A03E5AE978F /* GoalCalculator.swift in Sources */,
 				A8CA61F6B69DDA8BF0E011FA /* GoalPicker.swift in Sources */,
 				3E3C0EB2E0AB64F58D838C25 /* GoalRingView.swift in Sources */,
 				568195F1B180512E4B955706 /* GoalStep.swift in Sources */,
@@ -321,6 +331,7 @@
 				9D16D7D4868DF7C52FCB272C /* Models.swift in Sources */,
 				EF07B1D65E59EBCC33F752EA /* OnboardingFlow.swift in Sources */,
 				9B4789646250F91624D613E5 /* PairStep.swift in Sources */,
+				E11AAB25347131D5A52DC7EB /* PersonalGoalEditor.swift in Sources */,
 				7710B8ADC6D6400DE0D6CA6B /* RecalibrateFlow.swift in Sources */,
 				8D328AF6CCB4FAAA1FFD5830 /* RecalibrateReducer.swift in Sources */,
 				6AC5B7A5DB4DBB6CC4E7E633 /* ReminderScheduler.swift in Sources */,
@@ -341,6 +352,7 @@
 			files = (
 				2AF58B096D93C557222D9683 /* CoasterProtocolTests.swift in Sources */,
 				CC4565DF184D257DE1E3E40C /* DailyTotalsTests.swift in Sources */,
+				961EE2BD116DA166FF43C8FB /* GoalCalculatorTests.swift in Sources */,
 				C224E189765575CEF1EE5F14 /* RecalibrateReducerTests.swift in Sources */,
 				FB32D3CB5452C293C4B95779 /* ReminderSchedulerTests.swift in Sources */,
 				CBD7CBC91827B2350AE69EF4 /* SyncEngineTests.swift in Sources */,
@@ -413,7 +425,6 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -517,7 +528,6 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;

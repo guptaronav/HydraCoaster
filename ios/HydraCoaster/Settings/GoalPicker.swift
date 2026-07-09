@@ -5,6 +5,19 @@ import SwiftUI
 /// same control.
 struct GoalPicker: View {
     @Binding var goalML: Double
+    /// When non-nil, manually editing the goal here (chip or fine adjust)
+    /// flips this to `false` — personalization (V2-T1) only stays in sync
+    /// with the formula until the user overrides it by hand.
+    var isPersonalized: Binding<Bool>?
+    /// When non-nil, shows a "Calculate for me" affordance that the caller
+    /// wires to present `PersonalGoalEditor`.
+    var onCalculateForMe: (() -> Void)?
+
+    init(goalML: Binding<Double>, isPersonalized: Binding<Bool>? = nil, onCalculateForMe: (() -> Void)? = nil) {
+        self._goalML = goalML
+        self.isPersonalized = isPersonalized
+        self.onCalculateForMe = onCalculateForMe
+    }
 
     private static let presets: [Double] = [1500, 2000, 2500, 3000]
     private static let fineStep: Double = 50
@@ -30,7 +43,7 @@ struct GoalPicker: View {
 
             HStack(spacing: 20) {
                 Button {
-                    goalML = max(Self.floorML, goalML - Self.fineStep)
+                    setGoal(max(Self.floorML, goalML - Self.fineStep))
                 } label: {
                     Image(systemName: "minus.circle.fill").font(.title2)
                 }
@@ -40,13 +53,20 @@ struct GoalPicker: View {
                     .foregroundStyle(.secondary)
 
                 Button {
-                    goalML += Self.fineStep
+                    setGoal(goalML + Self.fineStep)
                 } label: {
                     Image(systemName: "plus.circle.fill").font(.title2)
                 }
             }
             .foregroundStyle(Color.hydraAccent)
             .buttonStyle(.plain)
+
+            if let onCalculateForMe {
+                Button("Calculate for me", action: onCalculateForMe)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.hydraAccent)
+                    .buttonStyle(.plain)
+            }
         }
         .animation(.easeOut(duration: 0.2), value: goalML)
     }
@@ -54,7 +74,7 @@ struct GoalPicker: View {
     private func chip(for preset: Double) -> some View {
         let isSelected = goalML == preset
         return Button {
-            goalML = preset
+            setGoal(preset)
         } label: {
             Text(Int(preset), format: .number)
                 .font(.subheadline.weight(.semibold))
@@ -64,6 +84,11 @@ struct GoalPicker: View {
                 .foregroundStyle(isSelected ? .white : .primary)
         }
         .buttonStyle(.plain)
+    }
+
+    private func setGoal(_ value: Double) {
+        goalML = value
+        isPersonalized?.wrappedValue = false
     }
 }
 
