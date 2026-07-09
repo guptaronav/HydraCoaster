@@ -74,10 +74,31 @@
   .weight  { grid-column: span 5; display: flex; flex-direction: column; }
   .session { grid-column: span 7; }
   .chart   { grid-column: span 12; }
+  .console { grid-column: span 12; }
   .controls{ grid-column: span 5; }
   .log     { grid-column: span 7; }
   @media (max-width: 820px) {
-    .weight, .session, .chart, .controls, .log { grid-column: span 12; }
+    .weight, .session, .chart, .console, .controls, .log { grid-column: span 12; }
+  }
+
+  .env-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: .9rem; margin: .8rem 0 1.1rem;
+  }
+  .stat .k {
+    display: block; color: var(--muted); font-size: .72rem;
+    text-transform: uppercase; letter-spacing: .1em; margin-bottom: .3rem;
+  }
+  .stat b { font-weight: 660; font-variant-numeric: tabular-nums; }
+  .stat .sub { color: var(--muted); font-size: .78rem; margin-left: .35rem; }
+  .prefs { display: flex; gap: 1.4rem; flex-wrap: wrap; align-items: center;
+           border-top: 1px solid var(--stroke); padding-top: 1rem; }
+  .prefs label {
+    display: inline-flex; align-items: center; gap: .5rem; cursor: pointer;
+    color: var(--text); font-size: .9rem; font-weight: 560;
+  }
+  .prefs input[type="checkbox"] {
+    width: 1.05rem; height: 1.05rem; accent-color: var(--accent); cursor: pointer;
   }
 
   .readout { display: flex; align-items: baseline; gap: .4rem; margin-top: auto; }
@@ -127,6 +148,36 @@
   .btn-row.controls-row { margin-top: .3rem; }
   .hint { color: var(--muted); font-size: .78rem; margin-top: .8rem; line-height: 1.5; }
 
+  .cal-input {
+    display: flex; align-items: end; gap: .6rem; margin-top: .9rem; flex-wrap: wrap;
+  }
+  .cal-input label {
+    display: block; color: var(--muted); font-size: .72rem;
+    text-transform: uppercase; letter-spacing: .1em; margin-bottom: .35rem;
+  }
+  .cal-field {
+    position: relative; display: inline-flex; align-items: center;
+  }
+  .cal-field input {
+    width: 7rem; font: inherit; font-weight: 640; font-variant-numeric: tabular-nums;
+    color: var(--text); background: oklch(100% 0 0 / 0.05);
+    border: 1px solid var(--stroke); border-radius: 12px;
+    padding: .65rem 2rem .65rem .8rem; outline: none;
+    transition: border-color .2s ease, background .2s ease;
+  }
+  .cal-field input:focus {
+    border-color: var(--accent); background: oklch(100% 0 0 / 0.08);
+  }
+  .cal-field .suffix {
+    position: absolute; right: .8rem; color: var(--muted); font-size: .85rem;
+    pointer-events: none;
+  }
+  .cal-status {
+    margin-top: .8rem; font-size: .82rem; color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .cal-status b { color: var(--accent-2); font-weight: 660; }
+
   canvas { width: 100%; height: 180px; display: block; border-radius: 10px; }
 
   .log ul { list-style: none; margin: .6rem 0 0; padding: 0;
@@ -175,6 +226,10 @@
         <span>In cup now&nbsp;<b id="cup-now">– g</b></span>
         <span>Elapsed&nbsp;<b id="elapsed">0:00</b></span>
       </div>
+      <div class="sess-meta">
+        <span>Last sip&nbsp;<b id="last-drink">–</b> ago</span>
+        <span>Next nudge&nbsp;<b id="nudge-in">–</b></span>
+      </div>
       <div class="btn-row">
         <button class="btn primary" id="sess-btn">Start session</button>
       </div>
@@ -188,15 +243,43 @@
       <canvas id="chart" width="1200" height="360"></canvas>
     </section>
 
+    <!-- Environment & alert console -->
+    <section class="card console">
+      <h2>Environment &amp; alerts</h2>
+      <div class="env-grid">
+        <div class="stat"><span class="k">Location</span><b id="loc">–</b></div>
+        <div class="stat"><span class="k">Temperature</span><b id="env-temp">–</b></div>
+        <div class="stat"><span class="k">Humidity</span><b id="env-hum">–</b></div>
+        <div class="stat"><span class="k">Base interval</span><b id="int-base">–</b></div>
+        <div class="stat"><span class="k">Ideal interval</span><b id="int-now">–</b><span class="sub" id="int-why"></span></div>
+        <div class="stat"><span class="k">Next nudge</span><b id="nudge-in2">–</b></div>
+      </div>
+      <div class="prefs">
+        <label><input type="checkbox" id="pref-sound" /> Buzzer sound</label>
+        <label><input type="checkbox" id="pref-led" /> LED flash</label>
+        <label><input type="checkbox" id="pref-remind" /> Drink reminders</label>
+      </div>
+    </section>
+
     <!-- Controls -->
     <section class="card controls">
       <h2>Calibration</h2>
       <div class="btn-row controls-row">
         <button class="btn" id="tare-btn">Tare (empty)</button>
-        <button class="btn" id="cal-btn">Calibrate 200 g</button>
+        <button class="btn" id="buzz-btn">Buzz 🔔</button>
       </div>
-      <p class="hint">Tare with nothing on the coaster. Then place a known 200 g
-        mass and calibrate. Values persist on the device.</p>
+      <div class="cal-input">
+        <label for="cal-mass">Known mass</label>
+        <div class="cal-field">
+          <input id="cal-mass" type="number" min="1" step="1" value="200" inputmode="decimal" />
+          <span class="suffix">g</span>
+        </div>
+        <button class="btn primary" id="cal-btn">Calibrate</button>
+      </div>
+      <div class="cal-status" id="cal-status">— counts/g</div>
+      <p class="hint">Tare with nothing on the coaster. Then place any known mass,
+        enter its weight, and calibrate. Calibration is stored on the host and
+        persists across restarts.</p>
     </section>
 
     <!-- Session log -->
@@ -269,6 +352,8 @@
 
   // ── format helpers ────────────────────────────────────────────────────────
   const fmtDur = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  const fmtMin = (s) => `${Math.round(s / 60)} min`;
+  let prefTouched = 0;
 
   // ── SSE stream ────────────────────────────────────────────────────────────
   let sessionActive = false;
@@ -281,11 +366,18 @@
 
     $("grams").textContent = d.grams.toFixed(1);
     const stab = $("stability");
-    if (d.stable) { stab.className = "stability settled";
+    if (d.settled) { stab.className = "stability settled";
       $("stab-tag").textContent = "settled"; }
+    else if (d.stable) { stab.className = "stability moving";
+      $("stab-tag").textContent = "holding…"; }
     else { stab.className = "stability moving";
-      $("stab-tag").textContent = "settling"; }
+      $("stab-tag").textContent = "moving"; }
     $("stab-detail").textContent = "± " + d.stddev.toFixed(1) + " g";
+
+    // calibration readout
+    const c = d.calibration;
+    $("cal-status").innerHTML =
+      `<b>${c.counts_per_gram.toFixed(2)}</b> counts/g · tared @ ${c.tare.toFixed(0)}`;
 
     // session
     const s = d.session;
@@ -296,6 +388,31 @@
     $("start-g").textContent = (s.active ? s.start_g.toFixed(0) : "–") + " g";
     $("cup-now").textContent = d.cup_present ? d.grams.toFixed(0) + " g" : "– g";
     $("elapsed").textContent = fmtDur(s.duration_s);
+
+    // reminder + environment console
+    const nudge = fmtDur(Math.max(0, d.remind_after_s - d.last_drink_s));
+    $("last-drink").textContent = fmtDur(d.last_drink_s);
+    $("nudge-in").textContent = nudge;
+    $("nudge-in2").textContent = d.prefs.remind ? nudge : "off";
+
+    const loc = d.location;
+    $("loc").textContent = loc.city ? loc.city
+      : (loc.lat ? `${loc.lat}, ${loc.lon}` : "–");
+    $("env-temp").textContent = d.weather.temp_c == null ? "–"
+      : d.weather.temp_c.toFixed(1) + " °C";
+    $("env-hum").textContent = d.weather.humidity == null ? "–"
+      : d.weather.humidity.toFixed(0) + " %";
+    $("int-base").textContent = fmtMin(d.remind_base_s);
+    $("int-now").textContent = fmtMin(d.remind_after_s);
+    $("int-why").textContent = d.remind_factors.length
+      ? d.remind_factors.map(f => `${f.label} ×${f.x}`).join(", ") : "";
+
+    // prefs — don't fight the user for 1 s after they click a toggle
+    if (Date.now() - prefTouched > 1000) {
+      $("pref-sound").checked  = d.prefs.sound;
+      $("pref-led").checked    = d.prefs.led;
+      $("pref-remind").checked = d.prefs.remind;
+    }
 
     // log
     const ul = $("log");
@@ -318,7 +435,18 @@
   $("sess-btn").onclick = () =>
     post(sessionActive ? "/api/session/end" : "/api/session/start");
   $("tare-btn").onclick = () => post("/api/tare");
-  $("cal-btn").onclick  = () => post("/api/calibrate");
+  $("buzz-btn").onclick = () => post("/api/buzz");
+  for (const k of ["sound", "led", "remind"]) {
+    $("pref-" + k).onchange = (e) => {
+      prefTouched = Date.now();
+      post(`/api/prefs?${k}=` + (e.target.checked ? 1 : 0));
+    };
+  }
+  $("cal-btn").onclick  = () => {
+    const mass = parseFloat($("cal-mass").value);
+    if (!mass || mass <= 0) { $("cal-mass").focus(); return; }
+    post("/api/calibrate?grams=" + encodeURIComponent(mass));
+  };
 </script>
 </body>
 </html>
