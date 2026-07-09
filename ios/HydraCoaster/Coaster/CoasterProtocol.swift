@@ -72,6 +72,8 @@ enum CoasterCommand: Equatable {
     case tare
     case calibrate(grams: Double)
     case resetSipLog
+    /// Celebration flourish (V2-T7) — respects prefs, unlike `buzz`.
+    case celebrate
 }
 
 // MARK: - Little-endian helpers
@@ -178,6 +180,8 @@ enum CoasterEncode {
             return Data([0x03] + leBytes(gramsX10))
         case .resetSipLog:
             return Data([0x04])
+        case .celebrate:
+            return Data([0x05])
         }
     }
 }

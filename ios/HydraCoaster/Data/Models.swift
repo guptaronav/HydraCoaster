@@ -86,6 +86,10 @@ final class AppSettings {
     /// `Appearance` raw value (0 = `.system`).
     var theme: Int = 0
     var appearance: Int = 0
+    /// Last calendar day the coaster celebration (D007 0x05) fired (V2-T7) —
+    /// nil until the first time. Optional/defaulted so SwiftData's
+    /// lightweight migration can add this to an existing store.
+    var lastCelebratedDay: Date?
 
     init(
         goalML: Double = 2000,
@@ -102,7 +106,8 @@ final class AppSettings {
         respectFocus: Bool = false,
         reminderPreset: Int = ReminderPreset.standard.rawValue,
         theme: Int = 0,
-        appearance: Int = 0
+        appearance: Int = 0,
+        lastCelebratedDay: Date? = nil
     ) {
         self.goalML = goalML
         self.soundOn = soundOn
@@ -119,6 +124,7 @@ final class AppSettings {
         self.reminderPreset = reminderPreset
         self.theme = theme
         self.appearance = appearance
+        self.lastCelebratedDay = lastCelebratedDay
     }
 
     static func fetchOrCreate(in context: ModelContext) -> AppSettings {

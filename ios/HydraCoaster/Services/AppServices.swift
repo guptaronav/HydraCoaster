@@ -46,7 +46,12 @@ struct HistorySnapshot {
 final class AppServices {
     private let client: CoasterClient
     private let reminderScheduler: ReminderScheduler
-    let weatherService: WeatherService // exposed for the DEBUG panel
+    /// Exposed for the DEBUG panel. Externally owned (passed in, defaulted to
+    /// a fresh instance) rather than created here — App.swift's
+    /// `effectiveGoalML` closure needs to read this SAME instance's
+    /// `lastFactor` so the celebration check agrees with whatever the Today
+    /// ring (which observes this instance via the environment) is showing.
+    let weatherService: WeatherService
     /// Exposed so Settings can request auth + preview-derive the sleep
     /// window interactively; AppServices uses the same instance for its own
     /// background refresh (see `refreshSleepDerivedWindowIfNeeded`).
@@ -98,11 +103,26 @@ final class AppServices {
     /// Current `Theme` raw value (V2-T6), read the same way `baseGoalML` is
     /// — only needed for the widget snapshot below.
     private let themeRaw: () -> Int
+    /// Weather-scaled goal (V2-T7) — the SAME value TodayView's ring shows
+    /// (`GoalCalculator.effectiveGoalML`, applied to this instance's own
+    /// `weatherService.lastFactor`). Funneled through a closure for the same
+    /// reason `baseGoalML` reads its setting through one.
+    private let effectiveGoalML: () -> Double
+    /// Last calendar day the celebration fired (`AppSettings.
+    /// lastCelebratedDay`) — nil until the first time.
+    private let lastCelebratedDay: () -> Date?
+    /// Persists the day a celebration just fired, the one point this file
+    /// writes that field, funneled through a closure for the same reason
+    /// `saveSleepDerivedWindow` is.
+    private let saveCelebratedDay: (Date) -> Void
 
     init(
         client: CoasterClient,
         syncEngine: SyncEngine,
         store: SipEventStoring,
+        // Optional-with-nil rather than `= WeatherService()`: a @MainActor
+        // init can't be evaluated in a default argument under Swift 5.9.
+        weatherService: WeatherService? = nil,
         isRemindEnabled: @escaping () -> Bool = { true },
         quietHours: @escaping () -> QuietHoursSettings = { QuietHoursSettings(mode: 0, startMin: 0, endMin: 0) },
         reminderPreset: @escaping () -> Int = { ReminderPreset.standard.rawValue },
@@ -110,11 +130,14 @@ final class AppServices {
         isFocused: @escaping () -> Bool = { false },
         saveSleepDerivedWindow: @escaping (Int, Int) -> Void = { _, _ in },
         baseGoalML: @escaping () -> Double = { 2000 },
-        themeRaw: @escaping () -> Int = { Theme.aqua.rawValue }
+        themeRaw: @escaping () -> Int = { Theme.aqua.rawValue },
+        effectiveGoalML: @escaping () -> Double = { 2000 },
+        lastCelebratedDay: @escaping () -> Date? = { nil },
+        saveCelebratedDay: @escaping (Date) -> Void = { _ in }
     ) {
         self.client = client
         self.reminderScheduler = ReminderScheduler()
-        self.weatherService = WeatherService()
+        self.weatherService = weatherService ?? WeatherService()
         self.sleepScheduleReader = SleepScheduleReader()
         self.healthKitLogger = HealthKitLogger()
         self.isRemindEnabled = isRemindEnabled
@@ -125,6 +148,9 @@ final class AppServices {
         self.saveSleepDerivedWindow = saveSleepDerivedWindow
         self.baseGoalML = baseGoalML
         self.themeRaw = themeRaw
+        self.effectiveGoalML = effectiveGoalML
+        self.lastCelebratedDay = lastCelebratedDay
+        self.saveCelebratedDay = saveCelebratedDay
         self.store = store
         self.sips = store.loadAll()
 
@@ -136,7 +162,7 @@ final class AppServices {
             self?.rescheduleReminder() // no sips -> pending reminder cancelled
             self?.writeWidgetStateAndReload()
         }
-        weatherService.onWeatherUpdate = { [weak self] seconds in
+        self.weatherService.onWeatherUpdate = { [weak self] seconds in
             self?.handleWeatherUpdate(seconds)
         }
 
@@ -225,7 +251,33 @@ final class AppServices {
         sips.append(record)
         rescheduleReminder()
         writeWidgetStateAndReload()
+        maybeCelebrate()
         Task { @MainActor [weak self] in await self?.syncHealthKit(seq: record.seq) }
+    }
+
+    /// V2-T7: fires the coaster's celebration flourish (D007 0x05) the first
+    /// time today's consumption crosses the effective goal — checked after
+    /// every new sip and after reclassify, since both can move today's total
+    /// across the line.
+    ///
+    /// Only celebrates (and records the day) while connected: a crossing
+    /// that happens while disconnected is simply missed, with no catch-up
+    /// once the coaster reconnects later that day. Keeps this a fire-once
+    /// side effect of the moment of crossing rather than a queued/retried one.
+    private func maybeCelebrate() {
+        guard client.isConnected else { return }
+        let now = Date()
+        let consumedToday = sips
+            .filter { Calendar.current.isDateInToday($0.date) }
+            .reduce(0) { $0 + $1.effectiveGrams }
+        guard Celebration.shouldCelebrate(
+            consumedML: consumedToday,
+            goalML: effectiveGoalML(),
+            lastCelebrated: lastCelebratedDay(),
+            now: now
+        ) else { return }
+        client.sendCommand(.celebrate)
+        saveCelebratedDay(now)
     }
 
     /// Snapshots today's consumption/streak/theme into the App Group and
@@ -262,6 +314,7 @@ final class AppServices {
             sips[index] = current.reclassified(to: drink)
         }
         writeWidgetStateAndReload() // effectiveGrams changed — today's ring must follow
+        maybeCelebrate()
         Task { @MainActor [weak self] in await self?.syncHealthKit(seq: seq) }
     }
 

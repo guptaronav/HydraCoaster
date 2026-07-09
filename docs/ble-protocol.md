@@ -72,6 +72,11 @@ Bitfield: b0 sound, b1 led, b2 reminders enabled. Persisted in NVS; default
 | `0x02` | tare — capture settled median as new zero |
 | `0x03` + `uint16 grams_x10` | calibrate with known mass on the coaster |
 | `0x04` | clear the sip log ring (seq counter keeps counting — stays unique) |
+| `0x05` | celebrate — flourish on first daily goal hit |
+
+Celebrate (`0x05`) respects prefs (sound only if b0, LED only if b1 — silently
+no-ops but still reports ok if both are off), unlike buzz test (`0x01`), which
+always plays both channels regardless of prefs.
 
 Results are reported on D008.
 

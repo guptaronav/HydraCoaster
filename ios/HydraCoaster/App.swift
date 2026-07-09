@@ -26,6 +26,7 @@ struct HydraCoasterApp: App {
         let store = SwiftDataSipStore(modelContext: container.mainContext)
         let client = CoasterClient()
         let engine = SyncEngine(store: store)
+        let weatherService = WeatherService()
         _client = State(initialValue: client)
         _syncEngine = State(initialValue: engine)
         let context = container.mainContext
@@ -33,6 +34,7 @@ struct HydraCoasterApp: App {
             client: client,
             syncEngine: engine,
             store: store,
+            weatherService: weatherService,
             isRemindEnabled: { AppSettings.fetchOrCreate(in: context).remindOn },
             quietHours: {
                 let s = AppSettings.fetchOrCreate(in: context)
@@ -48,7 +50,17 @@ struct HydraCoasterApp: App {
                 try? context.save()
             },
             baseGoalML: { AppSettings.fetchOrCreate(in: context).goalML },
-            themeRaw: { AppSettings.fetchOrCreate(in: context).theme }
+            themeRaw: { AppSettings.fetchOrCreate(in: context).theme },
+            effectiveGoalML: {
+                let base = AppSettings.fetchOrCreate(in: context).goalML
+                return GoalCalculator.effectiveGoalML(base: base, reminderFactor: weatherService.lastFactor)
+            },
+            lastCelebratedDay: { AppSettings.fetchOrCreate(in: context).lastCelebratedDay },
+            saveCelebratedDay: { day in
+                let s = AppSettings.fetchOrCreate(in: context)
+                s.lastCelebratedDay = day
+                try? context.save()
+            }
         )
         _appServices = State(initialValue: services)
 

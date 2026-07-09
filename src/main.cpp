@@ -77,6 +77,33 @@ static void alert(bool sound, bool light) {
     }
 }
 
+// Celebration flourish (D007 0x05) — 3 short ascending chirps with an amber
+// LED pulse per chirp, ~660 ms total. Deliberately distinct from alert()'s
+// fixed-pitch reminder tones/white flash so the two are never confused by
+// ear or eye. Unlike alert()/buzz-test, callers gate sound/light on prefs
+// before calling this (see loop()'s celebratePending handling) — this
+// function itself just plays whatever channels it's told to.
+static constexpr uint32_t CELEBRATE_TONES_HZ[] = {900, 1400, 2100};
+static constexpr uint32_t CELEBRATE_TONE_MS    = 120;
+static constexpr uint32_t CELEBRATE_GAP_MS     = 100;
+
+static void celebrate(bool sound, bool light) {
+    for (uint32_t f : CELEBRATE_TONES_HZ) {
+        if (light) rgbLedWrite(PIN_NEOPIXEL, 255, 180, 0);
+        if (sound) {
+            ledcAttach(BUZZER_PIN, f, 10);
+            ledcWrite(BUZZER_PIN, 512);
+        }
+        delay(CELEBRATE_TONE_MS);
+        if (sound) {
+            ledcWrite(BUZZER_PIN, 0);
+            ledcDetach(BUZZER_PIN);
+        }
+        if (light) rgbLedWrite(PIN_NEOPIXEL, 0, 0, 0);
+        delay(CELEBRATE_GAP_MS);
+    }
+}
+
 // ── Timing tunables ───────────────────────────────────────────────────────────
 static constexpr uint64_t SAMPLE_PERIOD_MS       = 100;   // feed the brain at ~10 Hz
 static constexpr uint64_t WEIGHT_NOTIFY_PERIOD_MS = 500;  // D002 at ~2 Hz
@@ -159,6 +186,7 @@ static volatile uint32_t timeSyncUnix    = 0;
 static volatile bool     backfillPending = false;
 static volatile bool     clearLogPending = false;
 static volatile uint32_t backfillFromSeq = 0;
+static volatile bool     celebratePending = false;
 
 // ── Small helpers ────────────────────────────────────────────────────────────
 static bool clockSynced() { return time(nullptr) > 1'000'000'000L; }
@@ -316,6 +344,8 @@ static void handleCommand(const uint8_t *data, size_t len) {
         calPending  = true;
     } else if (len == 1 && data[0] == 0x04) {
         clearLogPending = true;
+    } else if (len == 1 && data[0] == 0x05) {
+        celebratePending = true;
     } else {
         updateStatusChar(len > 0 ? data[0] : 0, 3); // bad command
     }
@@ -596,6 +626,16 @@ void loop() {
         saveRing();
         updateStatusChar(0x04, 0);
         Serial.println(">> Sip log cleared");
+    }
+    if (celebratePending) {
+        celebratePending = false;
+        // Unlike buzz-test (0x01), celebrate respects prefs: silent/dark
+        // channels are simply skipped. Both off -> no-op, still reports ok.
+        bool sound = prefsByte & 0x01;
+        bool light = prefsByte & 0x02;
+        if (sound || light) celebrate(sound, light);
+        updateStatusChar(0x05, 0);
+        Serial.println(">> Celebration!");
     }
 
     while (nau.available()) {

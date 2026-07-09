@@ -118,6 +118,10 @@ struct CoasterProtocolTests {
         #expect(CoasterEncode.command(.tare) == Data([0x02]))
     }
 
+    @Test func encodeCelebrate() {
+        #expect(CoasterEncode.command(.celebrate) == Data([0x05]))
+    }
+
     @Test func encodeCommand_calibrate_200Grams() {
         // 200.0 g -> grams_x10 = 2000 = 0x07D0 -> LE D0 07
         #expect(CoasterEncode.command(.calibrate(grams: 200.0)) == Data([0x03, 0xD0, 0x07]))

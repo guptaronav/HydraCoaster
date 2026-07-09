@@ -24,11 +24,13 @@
 		5A2DAAAD8083EAD06B39BD28 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A96A11DFB7ADECF0A676D51 /* Theme.swift */; };
 		5D7329418BD0B840F767E929 /* SleepScheduleReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24C4D3BC5354DB006B1CC2D4 /* SleepScheduleReader.swift */; };
 		5DD61E19C091D18EBE862589 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4543064662ED135C3305086 /* TodayView.swift */; };
+		5FC58CC7A8045FF4CE612974 /* Celebration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67831D9A5CE92247BD43F0FE /* Celebration.swift */; };
 		62CCAA94296F802BBDA14816 /* WidgetState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F9684A32560DDB9AD6ADA15 /* WidgetState.swift */; };
 		660291D333D51F7DA798176F /* DailyTotals.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2896DC92CA10A88469838585 /* DailyTotals.swift */; };
 		6911D30B6B2BD00B0394BE69 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D2FF222701C4B05459E481 /* HistoryView.swift */; };
 		6AC5B7A5DB4DBB6CC4E7E633 /* ReminderScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA7F165E3DC5F13C21546910 /* ReminderScheduler.swift */; };
 		6BDC5837DD380FAFDDE6440D /* AnalyticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10DDD585DF42EF799A46C65B /* AnalyticsTests.swift */; };
+		72153ADD49FCAC1EFD398B6E /* CelebrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 070320BC426AD9308572010C /* CelebrationTests.swift */; };
 		733CE3E8364457A8DE32B85F /* WeatherService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5598C20A998C60337235F6D8 /* WeatherService.swift */; };
 		7710B8ADC6D6400DE0D6CA6B /* RecalibrateFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D410F3B1EDF13CB3F8456929 /* RecalibrateFlow.swift */; };
 		793A6D35ADE8461562F8BED1 /* CoasterProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D27588433F792039DE01CB /* CoasterProtocol.swift */; };
@@ -101,6 +103,7 @@
 
 /* Begin PBXFileReference section */
 		060B40674C52C3525B24AC48 /* PairStep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairStep.swift; sourceTree = "<group>"; };
+		070320BC426AD9308572010C /* CelebrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CelebrationTests.swift; sourceTree = "<group>"; };
 		08714BCB1CFB5330D1500567 /* DrinkCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrinkCatalog.swift; sourceTree = "<group>"; };
 		0F9954614A9C47ACB6069D5D /* GoalPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalPicker.swift; sourceTree = "<group>"; };
 		10DDD585DF42EF799A46C65B /* AnalyticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsTests.swift; sourceTree = "<group>"; };
@@ -130,6 +133,7 @@
 		61D2FF222701C4B05459E481 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		64F75460C5A1FFE782FEFA38 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		6720005A5A4E1C2E3C4F929D /* ConnectionDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionDebugView.swift; sourceTree = "<group>"; };
+		67831D9A5CE92247BD43F0FE /* Celebration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Celebration.swift; sourceTree = "<group>"; };
 		6B612E4A8CAB38DD14EC9513 /* AwardsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AwardsView.swift; sourceTree = "<group>"; };
 		6BB614A61B391F117469B9F8 /* CoasterProtocolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoasterProtocolTests.swift; sourceTree = "<group>"; };
 		6DFE8F026111C30E8F234361 /* AwardsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AwardsTests.swift; sourceTree = "<group>"; };
@@ -180,6 +184,7 @@
 			children = (
 				10DDD585DF42EF799A46C65B /* AnalyticsTests.swift */,
 				6DFE8F026111C30E8F234361 /* AwardsTests.swift */,
+				070320BC426AD9308572010C /* CelebrationTests.swift */,
 				6BB614A61B391F117469B9F8 /* CoasterProtocolTests.swift */,
 				F8E347DBBB37C57594E361CD /* DailyTotalsTests.swift */,
 				E139C42C6535901D26EDB689 /* DrinkCatalogTests.swift */,
@@ -274,6 +279,7 @@
 			children = (
 				B0AA61D842C9A46E947C779F /* AppServices.swift */,
 				24FEC1927AD3004E8790C659 /* Awards.swift */,
+				67831D9A5CE92247BD43F0FE /* Celebration.swift */,
 				FBB0C6A12891D327CA8F0BF4 /* FocusStatusGate.swift */,
 				E50BD98E9EE28C657283C34C /* GoalCalculator.swift */,
 				842924407C5D1BCF494B7C55 /* HealthKitLogger.swift */,
@@ -457,6 +463,7 @@
 				3A95D6DFD06645F14D90820B /* AppServices.swift in Sources */,
 				978457D198932CAC91D5A9B5 /* Awards.swift in Sources */,
 				9C6EB53CDBFB654809666C91 /* AwardsView.swift in Sources */,
+				5FC58CC7A8045FF4CE612974 /* Celebration.swift in Sources */,
 				BE11C3A3594555B1BA1AEF51 /* CoasterClient.swift in Sources */,
 				793A6D35ADE8461562F8BED1 /* CoasterProtocol.swift in Sources */,
 				F2A736AA50BBBF9041590DE7 /* ConnectionDebugView.swift in Sources */,
@@ -513,6 +520,7 @@
 			files = (
 				6BDC5837DD380FAFDDE6440D /* AnalyticsTests.swift in Sources */,
 				16B8BEA9A6BE11C183CC0DB4 /* AwardsTests.swift in Sources */,
+				72153ADD49FCAC1EFD398B6E /* CelebrationTests.swift in Sources */,
 				2AF58B096D93C557222D9683 /* CoasterProtocolTests.swift in Sources */,
 				CC4565DF184D257DE1E3E40C /* DailyTotalsTests.swift in Sources */,
 				7A0A83E64629458992A05763 /* DrinkCatalogTests.swift in Sources */,
