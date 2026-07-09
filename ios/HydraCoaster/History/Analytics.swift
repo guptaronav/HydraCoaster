@@ -9,8 +9,7 @@ enum Analytics {
     /// days ending on `endingOn` (inclusive), zero-filling days with no
     /// sips so charts get a continuous axis. `days` should be the FULL,
     /// unwindowed history (`Awards.dailyTotals`) — this trims/zero-fills a
-    /// window out of it, mirroring `DailyTotals.compute`'s own idiom but
-    /// parameterized over week/month instead of a fixed 14 days.
+    /// week- or month-sized window out of it.
     static func rangeTotals(
         days: [DailyTotal], range: HistoryRange, endingOn: Date, calendar: Calendar
     ) -> [DailyTotal] {

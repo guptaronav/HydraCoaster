@@ -13,11 +13,9 @@ import Foundation
 /// today's weather would be meaningless anyway.
 enum Awards {
     /// One calendar day's total effective ml, across ALL recorded sips —
-    /// deliberately its own bucketing rather than `DailyTotals.compute`,
-    /// which caps at a fixed 14-day window for the History chart. Streaks
-    /// and badges (a 30-day streak, the Century badge) need the user's whole
-    /// history. `DailyTotal` itself is reused as-is; only the windowed
-    /// compute function doesn't fit here.
+    /// the one full-history bucketing in the app. Streaks and badges (a
+    /// 30-day streak, the Century badge) need the user's whole history;
+    /// History's charts window it down afterward via `Analytics.rangeTotals`.
     static func dailyTotals(from sips: [SipRecord], calendar: Calendar = .current) -> [DailyTotal] {
         var byDay: [Date: Double] = [:]
         for sip in sips {

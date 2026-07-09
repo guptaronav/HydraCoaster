@@ -55,7 +55,6 @@
 		C224E189765575CEF1EE5F14 /* RecalibrateReducerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCC45DF7E84A6422BB0BF66C /* RecalibrateReducerTests.swift */; };
 		C8B42CC82AA0726A0B9AE8FB /* WidgetState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F9684A32560DDB9AD6ADA15 /* WidgetState.swift */; };
 		CBD7CBC91827B2350AE69EF4 /* SyncEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A5528E1FFD57F9FFB553102 /* SyncEngineTests.swift */; };
-		CC4565DF184D257DE1E3E40C /* DailyTotalsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E347DBBB37C57594E361CD /* DailyTotalsTests.swift */; };
 		CDA637227EA1536B13FE7E41 /* FocusStatusGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBB0C6A12891D327CA8F0BF4 /* FocusStatusGate.swift */; };
 		D24D65C5BBCF7CEA41D03F71 /* DrinkCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08714BCB1CFB5330D1500567 /* DrinkCatalog.swift */; };
 		D63666B8FEE3C4EC0B10BA74 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54725E2250A0A29AF9C5B9ED /* RootView.swift */; };
@@ -164,7 +163,6 @@
 		E139C42C6535901D26EDB689 /* DrinkCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrinkCatalogTests.swift; sourceTree = "<group>"; };
 		E50BD98E9EE28C657283C34C /* GoalCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalCalculator.swift; sourceTree = "<group>"; };
 		EA7F165E3DC5F13C21546910 /* ReminderScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderScheduler.swift; sourceTree = "<group>"; };
-		F8E347DBBB37C57594E361CD /* DailyTotalsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyTotalsTests.swift; sourceTree = "<group>"; };
 		F9301DCEA0CD6722573FC54A /* GoalStep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalStep.swift; sourceTree = "<group>"; };
 		FBB0C6A12891D327CA8F0BF4 /* FocusStatusGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusStatusGate.swift; sourceTree = "<group>"; };
 		FF167C05894EC4138160A52A /* HydraWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HydraWidget.swift; sourceTree = "<group>"; };
@@ -186,7 +184,6 @@
 				6DFE8F026111C30E8F234361 /* AwardsTests.swift */,
 				070320BC426AD9308572010C /* CelebrationTests.swift */,
 				6BB614A61B391F117469B9F8 /* CoasterProtocolTests.swift */,
-				F8E347DBBB37C57594E361CD /* DailyTotalsTests.swift */,
 				E139C42C6535901D26EDB689 /* DrinkCatalogTests.swift */,
 				28407FAC7AC7B30001505ED9 /* GoalCalculatorTests.swift */,
 				A940DE86052B9B8571246ABA /* QuietHoursTests.swift */,
@@ -522,7 +519,6 @@
 				16B8BEA9A6BE11C183CC0DB4 /* AwardsTests.swift in Sources */,
 				72153ADD49FCAC1EFD398B6E /* CelebrationTests.swift in Sources */,
 				2AF58B096D93C557222D9683 /* CoasterProtocolTests.swift in Sources */,
-				CC4565DF184D257DE1E3E40C /* DailyTotalsTests.swift in Sources */,
 				7A0A83E64629458992A05763 /* DrinkCatalogTests.swift in Sources */,
 				961EE2BD116DA166FF43C8FB /* GoalCalculatorTests.swift in Sources */,
 				506A0EBCD865B6828ED65F39 /* QuietHoursTests.swift in Sources */,
