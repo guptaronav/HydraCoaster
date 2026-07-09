@@ -8,6 +8,7 @@ import SwiftUI
 struct RecalibrateFlow: View {
     var client: CoasterClient
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.hydraTheme) private var theme
 
     @State private var step: RecalibrateStep = .emptyCoaster
     @State private var isAwaitingResult = false
@@ -61,7 +62,7 @@ struct RecalibrateFlow: View {
                     .monospacedDigit()
                 Text(isSettled ? "Settled" : "Settling…")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(isSettled ? Color.hydraAccent : .secondary)
+                    .foregroundStyle(isSettled ? theme.accent : .secondary)
             } else {
                 Text("No live reading")
                     .font(.subheadline)
@@ -88,7 +89,7 @@ struct RecalibrateFlow: View {
                 client.sendCommand(.tare)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.hydraAccent)
+            .tint(theme.accent)
             .disabled(!isSettled || isAwaitingResult)
         }
     }
@@ -125,7 +126,7 @@ struct RecalibrateFlow: View {
                 client.sendCommand(.calibrate(grams: grams))
             }
             .buttonStyle(.borderedProminent)
-            .tint(.hydraAccent)
+            .tint(theme.accent)
             .disabled(!isSettled || isAwaitingResult)
         }
     }
@@ -134,7 +135,7 @@ struct RecalibrateFlow: View {
         VStack(spacing: 16) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 44))
-                .foregroundStyle(Color.hydraAccent)
+                .foregroundStyle(theme.accent)
             Text("Calibration complete")
                 .font(.title3.weight(.bold))
             Text("The reading above reflects the new calibration.")
@@ -144,7 +145,7 @@ struct RecalibrateFlow: View {
 
             Button("Done") { dismiss() }
                 .buttonStyle(.borderedProminent)
-                .tint(.hydraAccent)
+                .tint(theme.accent)
         }
     }
 

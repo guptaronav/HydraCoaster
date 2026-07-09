@@ -7,6 +7,8 @@ struct LiveReadingCard: View {
     let weight: WeightReading?
     let onScanTapped: () -> Void
 
+    @Environment(\.hydraTheme) private var theme
+
     var body: some View {
         Group {
             if connectionState == .connected, let weight {
@@ -60,7 +62,7 @@ struct LiveReadingCard: View {
                 .font(.subheadline.weight(.semibold))
             }
             .buttonStyle(.borderedProminent)
-            .tint(.hydraAccent)
+            .tint(theme.accent)
             .disabled(connectionState == .scanning || connectionState == .connecting)
         }
     }
@@ -70,13 +72,15 @@ private struct StatusChip: View {
     let label: String
     let isActive: Bool
 
+    @Environment(\.hydraTheme) private var theme
+
     var body: some View {
         Text(label)
             .font(.caption.weight(.semibold))
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
-            .background(isActive ? Color.hydraAccent.opacity(0.18) : Color.primary.opacity(0.06), in: Capsule())
-            .foregroundStyle(isActive ? Color.hydraAccent : .secondary)
+            .background(isActive ? theme.accent.opacity(0.18) : Color.primary.opacity(0.06), in: Capsule())
+            .foregroundStyle(isActive ? theme.accent : .secondary)
     }
 }
 

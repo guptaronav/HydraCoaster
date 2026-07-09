@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import WidgetKit
 
 /// AppSettings' quiet-hours fields, as AppServices needs them — a plain
 /// snapshot so this file stays SwiftData-free (see `store` below for why
@@ -94,6 +95,9 @@ final class AppServices {
     /// scaled goal). Funneled through a closure for the same reason
     /// `isRemindEnabled` reads its setting through one.
     private let baseGoalML: () -> Double
+    /// Current `Theme` raw value (V2-T6), read the same way `baseGoalML` is
+    /// — only needed for the widget snapshot below.
+    private let themeRaw: () -> Int
 
     init(
         client: CoasterClient,
@@ -105,7 +109,8 @@ final class AppServices {
         respectFocus: @escaping () -> Bool = { false },
         isFocused: @escaping () -> Bool = { false },
         saveSleepDerivedWindow: @escaping (Int, Int) -> Void = { _, _ in },
-        baseGoalML: @escaping () -> Double = { 2000 }
+        baseGoalML: @escaping () -> Double = { 2000 },
+        themeRaw: @escaping () -> Int = { Theme.aqua.rawValue }
     ) {
         self.client = client
         self.reminderScheduler = ReminderScheduler()
@@ -119,6 +124,7 @@ final class AppServices {
         self.isFocused = isFocused
         self.saveSleepDerivedWindow = saveSleepDerivedWindow
         self.baseGoalML = baseGoalML
+        self.themeRaw = themeRaw
         self.store = store
         self.sips = store.loadAll()
 
@@ -128,6 +134,7 @@ final class AppServices {
         syncEngine.onHistoryReset = { [weak self] in
             self?.sips = []
             self?.rescheduleReminder() // no sips -> pending reminder cancelled
+            self?.writeWidgetStateAndReload()
         }
         weatherService.onWeatherUpdate = { [weak self] seconds in
             self?.handleWeatherUpdate(seconds)
@@ -135,6 +142,7 @@ final class AppServices {
 
         watchConnection()
         rescheduleReminder() // once at app start, from stored sips
+        writeWidgetStateAndReload() // once at app start, so the widget isn't stale before the first sip
         Task { @MainActor [weak self] in await self?.refreshSleepDerivedWindowIfNeeded() }
         startDailySleepRefresh()
     }
@@ -177,6 +185,13 @@ final class AppServices {
         rescheduleReminder()
     }
 
+    /// Called from Settings whenever the daily goal or the color theme
+    /// changes (V2-T6) — both are part of what the home-screen/lock-screen
+    /// widget shows, so a change needs the same reload as a fresh sip.
+    func widgetRelevantSettingsDidChange() {
+        writeWidgetStateAndReload()
+    }
+
     /// Debug: sample phone notification, fires in ~5 s.
     func sendTestNotification() {
         reminderScheduler.sendTestNotification()
@@ -209,7 +224,29 @@ final class AppServices {
     private func handleNewSip(_ record: SipRecord) {
         sips.append(record)
         rescheduleReminder()
+        writeWidgetStateAndReload()
         Task { @MainActor [weak self] in await self?.syncHealthKit(seq: record.seq) }
+    }
+
+    /// Snapshots today's consumption/streak/theme into the App Group and
+    /// nudges WidgetKit to redraw — the only place this file writes
+    /// `WidgetState` or imports WidgetKit, called from every path that
+    /// changes what the widget shows (a new sip, a history reset, or a
+    /// goal/theme change from Settings).
+    private func writeWidgetStateAndReload() {
+        let goal = baseGoalML()
+        let consumedToday = sips
+            .filter { Calendar.current.isDateInToday($0.date) }
+            .reduce(0) { $0 + $1.effectiveGrams }
+        let state = WidgetState(
+            consumedML: consumedToday,
+            goalML: goal,
+            streak: awardsSnapshot.currentStreak,
+            themeRaw: themeRaw(),
+            updatedAt: Date()
+        )
+        WidgetStateStore.save(state)
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     /// Reclassifies a stored sip to a new drink type (row tap → type
@@ -224,6 +261,7 @@ final class AppServices {
         if let index = sips.firstIndex(where: { $0.seq == seq }) {
             sips[index] = current.reclassified(to: drink)
         }
+        writeWidgetStateAndReload() // effectiveGrams changed — today's ring must follow
         Task { @MainActor [weak self] in await self?.syncHealthKit(seq: seq) }
     }
 

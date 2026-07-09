@@ -8,6 +8,7 @@ struct PairStep: View {
     var client: CoasterClient
     var onContinue: () -> Void
 
+    @Environment(\.hydraTheme) private var theme
     @State private var didAutoAdvance = false
 
     var body: some View {
@@ -82,15 +83,15 @@ struct PairStep: View {
             if client.connectionState == .connected {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 56, weight: .semibold))
-                    .foregroundStyle(Color.hydraAccent)
+                    .foregroundStyle(theme.accent)
             } else if isBluetoothReady {
                 ProgressView()
                     .controlSize(.large)
-                    .tint(Color.hydraAccent)
+                    .tint(theme.accent)
             } else {
                 Image(systemName: unreadyIcon)
                     .font(.system(size: 48, weight: .semibold))
-                    .foregroundStyle(Color.hydraAccent)
+                    .foregroundStyle(theme.accent)
             }
         }
         .frame(height: 260)

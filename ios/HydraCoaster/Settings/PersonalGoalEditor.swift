@@ -12,6 +12,7 @@ struct PersonalGoalEditor: View {
     @Binding var goalML: Double
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.hydraTheme) private var theme
     @State private var weightUnit: WeightUnit = .kg
     @State private var heightUnit: HeightUnit = .cm
 
@@ -111,7 +112,7 @@ struct PersonalGoalEditor: View {
                 (
                     Text(Int(computedGoalML), format: .number)
                         .font(.system(size: 34, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.hydraAccent)
+                        .foregroundStyle(theme.accent)
                     + Text(" ml")
                         .font(.headline.weight(.medium))
                         .foregroundStyle(.secondary)

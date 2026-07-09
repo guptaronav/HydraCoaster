@@ -9,6 +9,7 @@ struct GoalStep: View {
     @Binding var usePersonalizedGoal: Bool
     var onFinish: () -> Void
 
+    @Environment(\.hydraTheme) private var theme
     @State private var showPersonalize = false
 
     var body: some View {
@@ -36,7 +37,7 @@ struct GoalStep: View {
 
             Button("Start Tracking", action: onFinish)
                 .buttonStyle(.borderedProminent)
-                .tint(.hydraAccent)
+                .tint(theme.accent)
                 .controlSize(.large)
                 .padding(.horizontal, 32)
         }

@@ -7,6 +7,8 @@ import SwiftUI
 struct AwardsView: View {
     var appServices: AppServices
 
+    @Environment(\.hydraTheme) private var theme
+
     private static let columns = [
         GridItem(.flexible(), spacing: 12),
         GridItem(.flexible(), spacing: 12),
@@ -38,7 +40,7 @@ struct AwardsView: View {
     private func statTile(icon: String, value: Int, label: String) -> some View {
         VStack(spacing: 6) {
             Image(systemName: icon)
-                .foregroundStyle(Color.hydraAccent)
+                .foregroundStyle(theme.accent)
             Text(value, format: .number)
                 .font(.system(size: 28, weight: .bold, design: .rounded))
                 .monospacedDigit()
@@ -72,7 +74,7 @@ struct AwardsView: View {
         return VStack(spacing: 8) {
             Image(systemName: badge.symbol)
                 .font(.title2)
-                .foregroundStyle(isEarned ? Color.hydraAccent : .secondary)
+                .foregroundStyle(isEarned ? theme.accent : .secondary)
                 .opacity(isEarned ? 1 : 0.4)
 
             Text(badge.name)

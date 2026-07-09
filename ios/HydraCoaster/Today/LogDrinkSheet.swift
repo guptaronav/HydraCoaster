@@ -8,6 +8,7 @@ struct LogDrinkSheet: View {
     var syncEngine: SyncEngine
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.hydraTheme) private var theme
     @State private var amountML: Double = 350
     @State private var selectedDrink: DrinkType = DrinkCatalog.water
     @State private var date = Date()
@@ -74,7 +75,7 @@ struct LogDrinkSheet: View {
                 .font(.subheadline.weight(.semibold))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
-                .background(isSelected ? Color.hydraAccent : Color.primary.opacity(0.06), in: Capsule())
+                .background(isSelected ? theme.accent : Color.primary.opacity(0.06), in: Capsule())
                 .foregroundStyle(isSelected ? .white : .primary)
         }
         .buttonStyle(.plain)

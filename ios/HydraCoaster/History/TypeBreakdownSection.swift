@@ -7,6 +7,8 @@ import SwiftUI
 struct TypeBreakdownSection: View {
     let slices: [TypeSlice]
 
+    @Environment(\.hydraTheme) private var theme
+
     private var maxML: Double { slices.map(\.effectiveML).max() ?? 0 }
 
     var body: some View {
@@ -50,7 +52,7 @@ struct TypeBreakdownSection: View {
                 ZStack(alignment: .leading) {
                     Capsule().fill(Color.hydraAccentSoft)
                     Capsule()
-                        .fill(Color.hydraAccent)
+                        .fill(theme.accent)
                         .frame(width: geometry.size.width * fraction(slice))
                 }
             }

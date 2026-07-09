@@ -10,6 +10,8 @@ struct HeatmapSection: View {
     /// after "today") render as empty slots.
     let weeks: [[HeatmapCell?]]
 
+    @Environment(\.hydraTheme) private var theme
+
     private let cellSize: CGFloat = 14
     private let cellSpacing: CGFloat = 4
 
@@ -58,7 +60,7 @@ struct HeatmapSection: View {
 
     private func cell(_ cell: HeatmapCell?) -> some View {
         RoundedRectangle(cornerRadius: 4, style: .continuous)
-            .fill(cell.map { Color.hydraAccent.opacity(opacity(forIntensity: $0.intensity)) } ?? Color.clear)
+            .fill(cell.map { theme.accent.opacity(opacity(forIntensity: $0.intensity)) } ?? Color.clear)
             .frame(width: cellSize, height: cellSize)
     }
 

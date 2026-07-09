@@ -13,6 +13,8 @@ struct GoalPicker: View {
     /// wires to present `PersonalGoalEditor`.
     var onCalculateForMe: (() -> Void)?
 
+    @Environment(\.hydraTheme) private var theme
+
     init(goalML: Binding<Double>, isPersonalized: Binding<Bool>? = nil, onCalculateForMe: (() -> Void)? = nil) {
         self._goalML = goalML
         self.isPersonalized = isPersonalized
@@ -58,13 +60,13 @@ struct GoalPicker: View {
                     Image(systemName: "plus.circle.fill").font(.title2)
                 }
             }
-            .foregroundStyle(Color.hydraAccent)
+            .foregroundStyle(theme.accent)
             .buttonStyle(.plain)
 
             if let onCalculateForMe {
                 Button("Calculate for me", action: onCalculateForMe)
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.hydraAccent)
+                    .foregroundStyle(theme.accent)
                     .buttonStyle(.plain)
             }
         }
@@ -80,7 +82,7 @@ struct GoalPicker: View {
                 .font(.subheadline.weight(.semibold))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
-                .background(isSelected ? Color.hydraAccent : Color.primary.opacity(0.06), in: Capsule())
+                .background(isSelected ? theme.accent : Color.primary.opacity(0.06), in: Capsule())
                 .foregroundStyle(isSelected ? .white : .primary)
         }
         .buttonStyle(.plain)

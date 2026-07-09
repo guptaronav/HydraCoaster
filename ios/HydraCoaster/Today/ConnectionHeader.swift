@@ -5,9 +5,11 @@ struct ConnectionHeader: View {
     let connectionState: ConnectionState
     let batteryPercent: Int?
 
+    @Environment(\.hydraTheme) private var theme
+
     private var statusColor: Color {
         switch connectionState {
-        case .connected: .hydraAccent
+        case .connected: theme.accent
         case .connecting, .scanning: .yellow
         case .disconnected: .secondary
         }

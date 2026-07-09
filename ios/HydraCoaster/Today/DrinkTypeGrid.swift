@@ -9,6 +9,8 @@ struct DrinkTypeGrid: View {
     @Binding var selection: DrinkType
     var searchText: String = ""
 
+    @Environment(\.hydraTheme) private var theme
+
     private static let columns = [GridItem(.adaptive(minimum: 84), spacing: 12)]
 
     private var categories: [(DrinkCategory, [DrinkType])] {
@@ -52,7 +54,7 @@ struct DrinkTypeGrid: View {
             .frame(maxWidth: .infinity, minHeight: 72)
             .padding(8)
             .background(
-                isSelected ? Color.hydraAccent : Color.primary.opacity(0.06),
+                isSelected ? theme.accent : Color.primary.opacity(0.06),
                 in: RoundedRectangle(cornerRadius: 16, style: .continuous)
             )
             .foregroundStyle(isSelected ? .white : .primary)

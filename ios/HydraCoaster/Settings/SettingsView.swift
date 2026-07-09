@@ -10,6 +10,7 @@ struct SettingsView: View {
     var appServices: AppServices
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.hydraTheme) private var theme
     @State private var settings: AppSettings?
     @State private var showRecalibrate = false
     @State private var showPersonalize = false
@@ -30,11 +31,25 @@ struct SettingsView: View {
             Section("Daily Goal") {
                 if let settings {
                     GoalPicker(
-                        goalML: binding(settings, \.goalML),
+                        goalML: goalMLBinding,
                         isPersonalized: binding(settings, \.usePersonalizedGoal),
                         onCalculateForMe: { showPersonalize = true }
                     )
                     .padding(.vertical, 8)
+                }
+            }
+
+            Section("Appearance") {
+                if let settings {
+                    ThemeSwatchPicker(selection: themeBinding)
+                        .padding(.vertical, 4)
+
+                    Picker("Color Scheme", selection: binding(settings, \.appearance)) {
+                        ForEach(Appearance.allCases, id: \.self) { option in
+                            Text(option.name).tag(option.rawValue)
+                        }
+                    }
+                    .pickerStyle(.segmented)
                 }
             }
 
@@ -69,7 +84,7 @@ struct SettingsView: View {
                         if buzzConfirmed {
                             Spacer()
                             Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(Color.hydraAccent)
+                                .foregroundStyle(theme.accent)
                         }
                     }
                 }
@@ -102,7 +117,7 @@ struct SettingsView: View {
                     heightCm: binding(settings, \.heightCm),
                     activityLevel: binding(settings, \.activityLevel),
                     usePersonalizedGoal: binding(settings, \.usePersonalizedGoal),
-                    goalML: binding(settings, \.goalML)
+                    goalML: goalMLBinding
                 )
             }
         }
@@ -173,6 +188,37 @@ struct SettingsView: View {
         )
     }
 
+    /// Daily goal (V2-T6): local save + a widget reload — the widget shows
+    /// today's progress against this goal, so a change here needs the same
+    /// nudge as a fresh sip. Used by both `GoalPicker` and
+    /// `PersonalGoalEditor`'s live-preview writes instead of the generic
+    /// `binding(_:_:)` helper, which has no side-effect hook.
+    private var goalMLBinding: Binding<Double> {
+        Binding(
+            get: { settings?.goalML ?? 2000 },
+            set: { newValue in
+                guard let settings else { return }
+                settings.goalML = newValue
+                try? modelContext.save()
+                appServices.widgetRelevantSettingsDidChange()
+            }
+        )
+    }
+
+    /// Color theme (V2-T6): local save + a widget reload, same reasoning as
+    /// `goalMLBinding` — the widget's ring is tinted from this raw value.
+    private var themeBinding: Binding<Int> {
+        Binding(
+            get: { settings?.theme ?? Theme.aqua.rawValue },
+            set: { newValue in
+                guard let settings else { return }
+                settings.theme = newValue
+                try? modelContext.save()
+                appServices.widgetRelevantSettingsDidChange()
+            }
+        )
+    }
+
     private func writePrefsToDevice() {
         guard let settings else { return }
         client.write(prefs: CoasterPrefs(sound: settings.soundOn, led: settings.ledOn, remind: settings.remindOn))
@@ -182,5 +228,52 @@ struct SettingsView: View {
         let short = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
         return "\(short) (\(build))"
+    }
+}
+
+/// Swatch row for `Theme` (V2-T6): each circle previews its own accent
+/// color directly, so the picker doubles as a live preview — no separate
+/// color key needed.
+private struct ThemeSwatchPicker: View {
+    @Binding var selection: Int
+
+    var body: some View {
+        HStack(spacing: 18) {
+            ForEach(Theme.allCases, id: \.self) { candidate in
+                swatch(for: candidate)
+            }
+        }
+    }
+
+    private func swatch(for candidate: Theme) -> some View {
+        let isSelected = selection == candidate.rawValue
+        return Button {
+            selection = candidate.rawValue
+        } label: {
+            VStack(spacing: 6) {
+                Circle()
+                    .fill(candidate.accent)
+                    .frame(width: 32, height: 32)
+                    .overlay {
+                        if isSelected {
+                            Image(systemName: "checkmark")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(.white)
+                        }
+                    }
+                    .overlay {
+                        Circle()
+                            .strokeBorder(isSelected ? candidate.accent : Color.primary.opacity(0.1), lineWidth: isSelected ? 2 : 1)
+                            .frame(width: 38, height: 38)
+                    }
+                Text(candidate.name)
+                    .font(.caption2)
+                    .foregroundStyle(isSelected ? .primary : .secondary)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(candidate.name)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }

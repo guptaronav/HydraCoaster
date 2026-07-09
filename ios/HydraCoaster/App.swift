@@ -47,7 +47,8 @@ struct HydraCoasterApp: App {
                 s.quietEndMin = endMin
                 try? context.save()
             },
-            baseGoalML: { AppSettings.fetchOrCreate(in: context).goalML }
+            baseGoalML: { AppSettings.fetchOrCreate(in: context).goalML },
+            themeRaw: { AppSettings.fetchOrCreate(in: context).theme }
         )
         _appServices = State(initialValue: services)
 
@@ -67,6 +68,13 @@ struct HydraCoasterApp: App {
         // triggers the sleep derivation's lazy HealthKit auth request.
         if let raw = ProcessInfo.processInfo.environment["HC_QUIET_MODE"], let mode = Int(raw) {
             AppSettings.fetchOrCreate(in: context).quietMode = mode
+            try? context.save()
+        }
+        // Screenshot aid only: `HC_THEME=0|1|2|3` pre-sets the color theme
+        // (V2-T6) so the gate can capture each swatch's live-recolor effect
+        // without simulating a tap on the picker.
+        if let raw = ProcessInfo.processInfo.environment["HC_THEME"], let theme = Int(raw) {
+            AppSettings.fetchOrCreate(in: context).theme = theme
             try? context.save()
         }
         #endif

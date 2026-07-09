@@ -11,6 +11,7 @@ struct TodayView: View {
     @Query(sort: \SipEvent.date, order: .reverse) private var allSips: [SipEvent]
     @Environment(\.modelContext) private var modelContext
     @Environment(WeatherService.self) private var weather
+    @Environment(\.hydraTheme) private var theme
     @State private var settings: AppSettings?
     @State private var showingLogSheet = false
 
@@ -51,7 +52,7 @@ struct TodayView: View {
                     if weatherFactor > 1 {
                         Text("+\(Int(((weatherFactor - 1) * 100).rounded()))% weather")
                             .font(.caption.weight(.semibold))
-                            .foregroundStyle(Color.hydraAccent)
+                            .foregroundStyle(theme.accent)
                     }
 
                     // Subtle nudge only once there's something to show off
@@ -116,10 +117,10 @@ struct TodayView: View {
     private func streakChip(days: Int) -> some View {
         Label("\(days) day streak", systemImage: "flame.fill")
             .font(.caption.weight(.semibold))
-            .foregroundStyle(Color.hydraAccent)
+            .foregroundStyle(theme.accent)
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
-            .background(Color.hydraAccent.opacity(0.12), in: Capsule())
+            .background(theme.accent.opacity(0.12), in: Capsule())
             .padding(.top, 2)
     }
 }

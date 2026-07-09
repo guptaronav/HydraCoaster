@@ -41,6 +41,7 @@ struct SipListSection: View {
 private struct SipRow: View {
     let sip: SipEvent
     var onReclassify: (SipEvent, DrinkType) -> Void
+    @Environment(\.hydraTheme) private var theme
     @State private var showingPicker = false
 
     private var drink: DrinkType { DrinkCatalog.drink(for: sip.typeID) }
@@ -51,7 +52,7 @@ private struct SipRow: View {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: drink.systemImage)
-                    .foregroundStyle(Color.hydraAccent)
+                    .foregroundStyle(theme.accent)
                     .frame(width: 18)
 
                 Text(sip.date, style: .time)

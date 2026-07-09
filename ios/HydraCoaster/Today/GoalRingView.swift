@@ -7,6 +7,7 @@ struct GoalRingView: View {
     let consumedML: Double
     let goalML: Double
 
+    @Environment(\.hydraTheme) private var theme
     @ScaledMetric(relativeTo: .largeTitle) private var diameter: CGFloat = 232
     @ScaledMetric(relativeTo: .largeTitle) private var lineWidth: CGFloat = 20
     @ScaledMetric(relativeTo: .largeTitle) private var numberSize: CGFloat = 52
@@ -23,11 +24,11 @@ struct GoalRingView: View {
             // Accent-tinted track: keeps the hero alive at 0 ml and stays
             // visible against a dark background.
             Circle()
-                .stroke(Color.hydraAccent.opacity(0.16), lineWidth: lineWidth)
+                .stroke(theme.accent.opacity(0.16), lineWidth: lineWidth)
 
             Circle()
                 .trim(from: 0, to: progress)
-                .stroke(Color.hydraAccent, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .stroke(theme.accent, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .animation(.easeOut(duration: 0.6), value: progress)
 
@@ -44,7 +45,7 @@ struct GoalRingView: View {
                 if isOverGoal {
                     Text("goal reached")
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(Color.hydraAccent)
+                        .foregroundStyle(theme.accent)
                         .padding(.top, 2)
                 }
             }

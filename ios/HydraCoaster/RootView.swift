@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// Top-level tab shell. Shows onboarding as a full-screen cover until the
@@ -10,6 +11,14 @@ struct RootView: View {
     @AppStorage("hasOnboarded") private var hasOnboarded = false
     @State private var selectedTab: Tab = Self.initialTab
     @Environment(\.scenePhase) private var scenePhase
+    /// Single-row table (see `AppSettings.fetchOrCreate`) — `@Query` rather
+    /// than a one-shot fetch so theme/appearance changes made in Settings
+    /// recolor this view live, the same way `@Query` already keeps
+    /// TodayView/HistoryView's sip lists live.
+    @Query private var settingsRows: [AppSettings]
+
+    private var theme: Theme { Theme(rawValue: settingsRows.first?.theme ?? 0) ?? .aqua }
+    private var appearance: Appearance { Appearance(rawValue: settingsRows.first?.appearance ?? 0) ?? .system }
 
     private enum Tab: Int {
         case today, history, awards, settings
@@ -53,7 +62,9 @@ struct RootView: View {
             .tabItem { Label("Settings", systemImage: "gearshape.fill") }
             .tag(Tab.settings)
         }
-        .tint(.hydraAccent)
+        .tint(theme.accent)
+        .environment(\.hydraTheme, theme)
+        .preferredColorScheme(appearance.colorScheme)
         .environment(appServices.weatherService)
         .fullScreenCover(isPresented: onboardingBinding) {
             OnboardingFlow(client: client) {

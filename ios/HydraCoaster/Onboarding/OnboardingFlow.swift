@@ -19,6 +19,7 @@ struct OnboardingFlow: View {
     @State private var activityLevel: Int = 1
     @State private var usePersonalizedGoal = false
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.hydraTheme) private var theme
 
     #if DEBUG
     /// Screenshot aid only: `HC_ONBOARDING_STEP=0|1|2` jumps straight to a
@@ -62,7 +63,7 @@ struct OnboardingFlow: View {
         HStack(spacing: 8) {
             ForEach(Step.allCases, id: \.self) { candidate in
                 Capsule()
-                    .fill(candidate.rawValue <= step.rawValue ? Color.hydraAccent : Color.primary.opacity(0.12))
+                    .fill(candidate.rawValue <= step.rawValue ? theme.accent : Color.primary.opacity(0.12))
                     .frame(width: candidate == step ? 20 : 8, height: 8)
             }
         }

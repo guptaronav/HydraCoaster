@@ -15,6 +15,7 @@ struct HistoryView: View {
 
     @Query private var allSips: [SipEvent]
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.hydraTheme) private var theme
     @State private var settings: AppSettings?
     @State private var selectedDay: Date?
     @State private var range: HistoryRange = .week
@@ -108,8 +109,8 @@ struct HistoryView: View {
                     )
                     .foregroundStyle(
                         Calendar.current.isDate(entry.day, inSameDayAs: displayedDay)
-                            ? Color.hydraAccent
-                            : Color.hydraAccent.opacity(0.35)
+                            ? theme.accent
+                            : theme.accent.opacity(0.35)
                     )
                 }
 

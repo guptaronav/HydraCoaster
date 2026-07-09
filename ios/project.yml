@@ -30,6 +30,8 @@ targets:
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
         com.apple.developer.focus-status: true
+        com.apple.security.application-groups:
+          - group.com.ronav.HydraCoaster
     configFiles:
       Debug: Secrets.xcconfig
       Release: Secrets.xcconfig
@@ -39,10 +41,36 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: LPU8C59HD4
+    dependencies:
+      - target: HydraWidgetExtension
+        embed: true
     scheme:
       testTargets:
         - HydraCoasterTests
       gatherCoverageData: true
+  HydraWidgetExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: HydraWidget
+      - path: HydraCoaster/Theme/Theme.swift
+      - path: HydraCoaster/Theme/WidgetState.swift
+    info:
+      path: HydraWidget/Info.plist
+      properties:
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: HydraWidget/HydraWidgetExtension.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.ronav.HydraCoaster
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ronav.HydraCoaster.Widgets
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: LPU8C59HD4
   HydraCoasterTests:
     type: bundle.unit-test
     platform: iOS

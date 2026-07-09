@@ -4,6 +4,8 @@ import SwiftUI
 struct WelcomeStep: View {
     var onContinue: () -> Void
 
+    @Environment(\.hydraTheme) private var theme
+
     var body: some View {
         VStack(spacing: 32) {
             Spacer()
@@ -25,7 +27,7 @@ struct WelcomeStep: View {
 
             Button("Get Started", action: onContinue)
                 .buttonStyle(.borderedProminent)
-                .tint(.hydraAccent)
+                .tint(theme.accent)
                 .controlSize(.large)
                 .padding(.horizontal, 32)
         }
@@ -36,7 +38,7 @@ struct WelcomeStep: View {
         ZStack {
             ForEach(0..<3, id: \.self) { ring in
                 Circle()
-                    .stroke(Color.hydraAccent.opacity(0.14 - Double(ring) * 0.03), lineWidth: 1)
+                    .stroke(theme.accent.opacity(0.14 - Double(ring) * 0.03), lineWidth: 1)
                     .frame(width: 160 + CGFloat(ring) * 50, height: 160 + CGFloat(ring) * 50)
             }
 
@@ -46,7 +48,7 @@ struct WelcomeStep: View {
 
             Image(systemName: "drop.fill")
                 .font(.system(size: 56, weight: .semibold))
-                .foregroundStyle(Color.hydraAccent)
+                .foregroundStyle(theme.accent)
         }
         .frame(height: 260)
     }

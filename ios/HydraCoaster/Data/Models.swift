@@ -79,6 +79,13 @@ final class AppSettings {
     var respectFocus: Bool = false
     /// Reminder frequency preset (V2-T4) — see `ReminderPreset`.
     var reminderPreset: Int = ReminderPreset.standard.rawValue
+    /// Selectable color theme + appearance override (V2-T6). Optional/
+    /// defaulted so SwiftData's lightweight migration can add these to an
+    /// existing store — `theme` is a `Theme` raw value (0 = `.aqua`, the
+    /// original look, so existing users see no change), `appearance` is an
+    /// `Appearance` raw value (0 = `.system`).
+    var theme: Int = 0
+    var appearance: Int = 0
 
     init(
         goalML: Double = 2000,
@@ -93,7 +100,9 @@ final class AppSettings {
         quietStartMin: Int = 1320,
         quietEndMin: Int = 420,
         respectFocus: Bool = false,
-        reminderPreset: Int = ReminderPreset.standard.rawValue
+        reminderPreset: Int = ReminderPreset.standard.rawValue,
+        theme: Int = 0,
+        appearance: Int = 0
     ) {
         self.goalML = goalML
         self.soundOn = soundOn
@@ -108,6 +117,8 @@ final class AppSettings {
         self.quietEndMin = quietEndMin
         self.respectFocus = respectFocus
         self.reminderPreset = reminderPreset
+        self.theme = theme
+        self.appearance = appearance
     }
 
     static func fetchOrCreate(in context: ModelContext) -> AppSettings {
