@@ -69,6 +69,11 @@ final class AppServices {
         rescheduleReminder()
     }
 
+    /// Debug: sample phone notification, fires in ~5 s.
+    func sendTestNotification() {
+        reminderScheduler.sendTestNotification()
+    }
+
     private func handleNewSip(_ record: SipRecord) {
         sips.append(record)
         healthKitLogger.log(record)

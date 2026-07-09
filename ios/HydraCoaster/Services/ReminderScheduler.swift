@@ -48,6 +48,7 @@ func reminderBody(lastSip: Date, at date: Date) -> String {
 /// buzzes regardless of whether the phone is in view.
 final class ReminderScheduler: NSObject {
     private static let identifier = "com.ronav.HydraCoaster.reminder"
+    private static let testIdentifier = "com.ronav.HydraCoaster.reminder.test"
 
     private let center: UNUserNotificationCenter
     private let logger = Logger(subsystem: "com.ronav.HydraCoaster", category: "ReminderScheduler")
@@ -89,6 +90,23 @@ final class ReminderScheduler: NSObject {
     func cancel() {
         center.removePendingNotificationRequests(withIdentifiers: [Self.identifier])
     }
+
+    /// Debug: fires a sample notification in 5 s. Separate identifier so the
+    /// real pending mirror is untouched, and willPresent shows THIS one even
+    /// in the foreground so the button visibly works inside the app.
+    func sendTestNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = "Time for a sip"
+        content.body = "Test notification — reminders will look like this."
+        content.sound = .default
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+        let request = UNNotificationRequest(identifier: Self.testIdentifier, content: content, trigger: trigger)
+        center.add(request) { [logger] error in
+            if let error {
+                logger.error("failed to schedule test notification: \(error.localizedDescription)")
+            }
+        }
+    }
 }
 
 extension ReminderScheduler: UNUserNotificationCenterDelegate {
@@ -99,6 +117,7 @@ extension ReminderScheduler: UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        completionHandler([])
+        let isTest = notification.request.identifier == Self.testIdentifier
+        completionHandler(isTest ? [.banner, .sound] : [])
     }
 }

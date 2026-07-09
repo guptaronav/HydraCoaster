@@ -6,6 +6,7 @@ import SwiftUI
 struct TodayView: View {
     var client: CoasterClient
     var syncEngine: SyncEngine
+    var appServices: AppServices
 
     @Query(sort: \SipEvent.date, order: .reverse) private var allSips: [SipEvent]
     @Environment(\.modelContext) private var modelContext
@@ -52,7 +53,7 @@ struct TodayView: View {
             #if DEBUG
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink("Debug") {
-                    ConnectionDebugView(client: client, syncEngine: syncEngine)
+                    ConnectionDebugView(client: client, syncEngine: syncEngine, appServices: appServices)
                 }
                 .font(.caption)
             }

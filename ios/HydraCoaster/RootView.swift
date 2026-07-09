@@ -29,7 +29,7 @@ struct RootView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             NavigationStack {
-                TodayView(client: client, syncEngine: syncEngine)
+                TodayView(client: client, syncEngine: syncEngine, appServices: appServices)
             }
             .tabItem { Label("Today", systemImage: "drop.fill") }
             .tag(Tab.today)

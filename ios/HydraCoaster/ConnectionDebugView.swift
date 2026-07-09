@@ -5,6 +5,7 @@ import SwiftUI
 struct ConnectionDebugView: View {
     var client: CoasterClient
     var syncEngine: SyncEngine
+    var appServices: AppServices
     @Environment(WeatherService.self) private var weather
     @State private var confirmingReset = false
     @State private var awaitingResetAck = false
@@ -62,6 +63,10 @@ struct ConnectionDebugView: View {
                     client.sendCommand(.buzz)
                 }
                 .disabled(client.connectionState != .connected)
+
+                Button("Test Phone Notification") {
+                    appServices.sendTestNotification()
+                }
 
                 // Requires the coaster: clearing only the phone would let the
                 // next backfill re-import everything from the coaster's ring.
