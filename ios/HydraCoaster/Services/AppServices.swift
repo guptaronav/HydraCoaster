@@ -42,6 +42,10 @@ final class AppServices {
         syncEngine.onNewSip = { [weak self] record in
             self?.handleNewSip(record)
         }
+        syncEngine.onHistoryReset = { [weak self] in
+            self?.sips = []
+            self?.rescheduleReminder() // no sips -> pending reminder cancelled
+        }
         weatherService.onWeatherUpdate = { [weak self] seconds in
             self?.handleWeatherUpdate(seconds)
         }

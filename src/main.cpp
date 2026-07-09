@@ -149,6 +149,7 @@ static volatile uint16_t calGramsX10     = 0;
 static volatile bool     timeSyncPending = false;
 static volatile uint32_t timeSyncUnix    = 0;
 static volatile bool     backfillPending = false;
+static volatile bool     clearLogPending = false;
 static volatile uint32_t backfillFromSeq = 0;
 
 // ── Small helpers ────────────────────────────────────────────────────────────
@@ -290,6 +291,8 @@ static void handleCommand(const uint8_t *data, size_t len) {
         memcpy(&gramsX10, data + 1, 2);
         calGramsX10 = gramsX10;
         calPending  = true;
+    } else if (len == 1 && data[0] == 0x04) {
+        clearLogPending = true;
     } else {
         updateStatusChar(len > 0 ? data[0] : 0, 3); // bad command
     }
@@ -530,6 +533,17 @@ void loop() {
         CmdResult r = brain.calibrate(calGramsX10 / 10.0f);
         if (r == CmdResult::OK) prefs.putFloat("cpg", brain.countsPerGram());
         updateStatusChar(0x03, static_cast<uint8_t>(r));
+    }
+    if (clearLogPending) {
+        clearLogPending = false;
+        // Clear the ring but keep nextSeq monotonic: seqs stay unique across
+        // resets, so a phone that missed the reset can never double-import.
+        ringBlob.head  = 0;
+        ringBlob.count = 0;
+        memset(ringBlob.records, 0, sizeof(ringBlob.records));
+        saveRing();
+        updateStatusChar(0x04, 0);
+        Serial.println(">> Sip log cleared");
     }
 
     while (nau.available()) {

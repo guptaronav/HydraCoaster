@@ -31,6 +31,7 @@ struct SipRecord: Equatable, Sendable {
 protocol SipEventStoring: AnyObject {
     func loadAll() -> [SipRecord]
     func insert(_ record: SipRecord)
+    func deleteAll()
 }
 
 /// Bridges the BLE client's sip stream into storage: dedupes by sequence
@@ -56,6 +57,19 @@ final class SyncEngine {
     /// Extension point for T6 (reminders/notifications): fired once per
     /// newly inserted sip, whether it arrived live or via backfill.
     var onNewSip: ((SipRecord) -> Void)?
+
+    /// Fired after resetHistory() empties the store, so AppServices can drop
+    /// its sip mirror and cancel the pending reminder.
+    var onHistoryReset: (() -> Void)?
+
+    /// Wipes all stored sips. Call only after the coaster has confirmed its
+    /// own log clear (D008 {0x04, ok}) — clearing just the phone would let
+    /// the next backfill re-import everything.
+    func resetHistory() {
+        store.deleteAll()
+        knownSeqs.removeAll()
+        onHistoryReset?()
+    }
 
     init(store: SipEventStoring) {
         self.store = store

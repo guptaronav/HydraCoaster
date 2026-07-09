@@ -52,7 +52,7 @@ struct TodayView: View {
             #if DEBUG
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink("Debug") {
-                    ConnectionDebugView(client: client)
+                    ConnectionDebugView(client: client, syncEngine: syncEngine)
                 }
                 .font(.caption)
             }

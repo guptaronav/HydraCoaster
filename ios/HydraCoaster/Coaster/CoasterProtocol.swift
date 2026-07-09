@@ -70,6 +70,7 @@ enum CoasterCommand: Equatable {
     case buzz
     case tare
     case calibrate(grams: Double)
+    case resetSipLog
 }
 
 // MARK: - Little-endian helpers
@@ -167,6 +168,8 @@ enum CoasterEncode {
         case .calibrate(let grams):
             let gramsX10 = UInt16((grams * 10).rounded())
             return Data([0x03] + leBytes(gramsX10))
+        case .resetSipLog:
+            return Data([0x04])
         }
     }
 }

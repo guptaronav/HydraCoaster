@@ -95,4 +95,14 @@ final class SwiftDataSipStore: SipEventStoring {
                 .error("save failed for seq=\(record.seq): \(error)")
         }
     }
+
+    func deleteAll() {
+        do {
+            try modelContext.delete(model: SipEvent.self)
+            try modelContext.save()
+        } catch {
+            Logger(subsystem: "com.ronav.HydraCoaster", category: "SipStore")
+                .error("deleteAll failed: \(error)")
+        }
+    }
 }

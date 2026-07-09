@@ -17,6 +17,7 @@ private final class FakeSipStore: SipEventStoring {
 
     func loadAll() -> [SipRecord] { records }
     func insert(_ record: SipRecord) { records.append(record) }
+    func deleteAll() { records.removeAll() }
 }
 
 /// Fake BLE source: hand-fed AsyncStream, records backfill requests.
@@ -86,6 +87,19 @@ struct SyncEngineTests {
         #expect(store.records.count == 1)
         #expect(store.records[0].isEstimatedDate == true)
         #expect(store.records[0].date >= before && store.records[0].date <= after)
+    }
+
+    @Test func resetHistory_emptiesStoreClearsDedupeAndNotifies() {
+        let preloaded = [SipRecord(seq: 3, date: Date(), grams: 30.0, isEstimatedDate: false)]
+        let (engine, store) = makeEngine(preloaded: preloaded)
+        var resetFired = false
+        engine.onHistoryReset = { resetFired = true }
+
+        engine.resetHistory()
+
+        #expect(store.records.isEmpty)
+        #expect(engine.maxStoredSeq() == 0)
+        #expect(resetFired)
     }
 
     @Test func ingest_duplicateSeq_insertsOnlyOneRowAndDoesNotCrash() {

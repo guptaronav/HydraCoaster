@@ -71,6 +71,7 @@ Bitfield: b0 sound, b1 led, b2 reminders enabled. Persisted in NVS; default
 | `0x01` | buzz test — full alert, both channels, ignores prefs |
 | `0x02` | tare — capture settled median as new zero |
 | `0x03` + `uint16 grams_x10` | calibrate with known mass on the coaster |
+| `0x04` | clear the sip log ring (seq counter keeps counting — stays unique) |
 
 Results are reported on D008.
 
