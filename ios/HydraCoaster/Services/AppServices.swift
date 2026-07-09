@@ -13,6 +13,18 @@ struct QuietHoursSettings {
     let endMin: Int
 }
 
+/// Read-only snapshot for the Awards tab and Today's streak chip (V2-T3),
+/// recomputed on demand from `AppServices`' in-memory sip mirror plus the
+/// current base goal — the mirror already lives in memory, so there's
+/// nothing worth caching here.
+struct AwardsSnapshot {
+    let dailyScore: Int
+    let currentStreak: Int
+    let longestStreak: Int
+    /// Badge id -> date first earned. See `Awards.earnedBadges`.
+    let badges: [String: Date]
+}
+
 /// T6's single composition point: wires SyncEngine's sip stream and
 /// CoasterClient's connection state to HealthKit logging, weather-adjusted
 /// D005 writes, and the mirrored reminder notification. Nothing outside
@@ -65,6 +77,12 @@ final class AppServices {
     /// the one point this file writes AppSettings, funneled through a
     /// closure for the same reason `isRemindEnabled` reads it through one.
     private let saveSleepDerivedWindow: (Int, Int) -> Void
+    /// Current base goal in ml (V2-T3) — `AppSettings.goalML`, which already
+    /// reflects whichever of manual or personalized the user has picked (see
+    /// `Awards.swift` for why streaks/badges want this over the weather-
+    /// scaled goal). Funneled through a closure for the same reason
+    /// `isRemindEnabled` reads its setting through one.
+    private let baseGoalML: () -> Double
 
     init(
         client: CoasterClient,
@@ -75,7 +93,8 @@ final class AppServices {
         reminderPreset: @escaping () -> Int = { ReminderPreset.standard.rawValue },
         respectFocus: @escaping () -> Bool = { false },
         isFocused: @escaping () -> Bool = { false },
-        saveSleepDerivedWindow: @escaping (Int, Int) -> Void = { _, _ in }
+        saveSleepDerivedWindow: @escaping (Int, Int) -> Void = { _, _ in },
+        baseGoalML: @escaping () -> Double = { 2000 }
     ) {
         self.client = client
         self.reminderScheduler = ReminderScheduler()
@@ -88,6 +107,7 @@ final class AppServices {
         self.respectFocus = respectFocus
         self.isFocused = isFocused
         self.saveSleepDerivedWindow = saveSleepDerivedWindow
+        self.baseGoalML = baseGoalML
         self.store = store
         self.sips = store.loadAll()
 
@@ -149,6 +169,24 @@ final class AppServices {
     /// Debug: sample phone notification, fires in ~5 s.
     func sendTestNotification() {
         reminderScheduler.sendTestNotification()
+    }
+
+    /// Hydration score, streaks, and badges (V2-T3), built from the in-
+    /// memory sip mirror so AwardsView/TodayView never touch SwiftData.
+    var awardsSnapshot: AwardsSnapshot {
+        let goal = baseGoalML()
+        let calendar = Calendar.current
+        let now = Date()
+        let days = Awards.dailyTotals(from: sips, calendar: calendar)
+        let consumedToday = sips
+            .filter { calendar.isDateInToday($0.date) }
+            .reduce(0) { $0 + $1.effectiveGrams }
+        return AwardsSnapshot(
+            dailyScore: Awards.dailyScore(consumedML: consumedToday, goalML: goal),
+            currentStreak: Awards.currentStreak(days: days, goalML: goal, today: now, calendar: calendar),
+            longestStreak: Awards.longestStreak(days: days, goalML: goal, calendar: calendar),
+            badges: Awards.earnedBadges(sips: sips, days: days, goalML: goal, calendar: calendar)
+        )
     }
 
     private func handleNewSip(_ record: SipRecord) {

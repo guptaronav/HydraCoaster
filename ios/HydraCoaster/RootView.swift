@@ -12,11 +12,11 @@ struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     private enum Tab: Int {
-        case today, history, settings
+        case today, history, awards, settings
     }
 
     #if DEBUG
-    /// Screenshot aid only: `HC_INITIAL_TAB=0|1|2` selects a tab at launch
+    /// Screenshot aid only: `HC_INITIAL_TAB=0|1|2|3` selects a tab at launch
     /// so the gate can capture each one without simulating taps.
     private static var initialTab: Tab {
         guard let raw = ProcessInfo.processInfo.environment["HC_INITIAL_TAB"],
@@ -40,6 +40,12 @@ struct RootView: View {
             }
             .tabItem { Label("History", systemImage: "chart.bar.fill") }
             .tag(Tab.history)
+
+            NavigationStack {
+                AwardsView(appServices: appServices)
+            }
+            .tabItem { Label("Awards", systemImage: "trophy.fill") }
+            .tag(Tab.awards)
 
             NavigationStack {
                 SettingsView(client: client, appServices: appServices)

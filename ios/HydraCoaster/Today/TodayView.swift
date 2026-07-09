@@ -53,6 +53,13 @@ struct TodayView: View {
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(Color.hydraAccent)
                     }
+
+                    // Subtle nudge only once there's something to show off
+                    // (V2-T3) — a 1-day "streak" isn't a streak yet.
+                    let currentStreak = appServices.awardsSnapshot.currentStreak
+                    if currentStreak >= 2 {
+                        streakChip(days: currentStreak)
+                    }
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
@@ -104,5 +111,15 @@ struct TodayView: View {
 
     private func reclassify(_ sip: SipEvent, to drink: DrinkType) {
         appServices.reclassify(seq: sip.seq, to: drink)
+    }
+
+    private func streakChip(days: Int) -> some View {
+        Label("\(days) day streak", systemImage: "flame.fill")
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(Color.hydraAccent)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(Color.hydraAccent.opacity(0.12), in: Capsule())
+            .padding(.top, 2)
     }
 }

@@ -46,7 +46,8 @@ struct HydraCoasterApp: App {
                 s.quietStartMin = startMin
                 s.quietEndMin = endMin
                 try? context.save()
-            }
+            },
+            baseGoalML: { AppSettings.fetchOrCreate(in: context).goalML }
         )
         _appServices = State(initialValue: services)
 

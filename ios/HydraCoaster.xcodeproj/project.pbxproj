@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		12866EF7F7724C3813A4B273 /* LogDrinkSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51286BE9A458025A6517CCD /* LogDrinkSheet.swift */; };
+		16B8BEA9A6BE11C183CC0DB4 /* AwardsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DFE8F026111C30E8F234361 /* AwardsTests.swift */; };
 		244132F45A0EB592B7E0FF86 /* WelcomeStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2E252A82842863834A4E496 /* WelcomeStep.swift */; };
 		261A2E5EBD4300BDB83BCFFD /* QuietHoursSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4665A27B2B121F91BDDE4547 /* QuietHoursSection.swift */; };
 		2AF58B096D93C557222D9683 /* CoasterProtocolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB614A61B391F117469B9F8 /* CoasterProtocolTests.swift */; };
@@ -33,7 +34,9 @@
 		8D328AF6CCB4FAAA1FFD5830 /* RecalibrateReducer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F1839894BBAC42EC180FFC7 /* RecalibrateReducer.swift */; };
 		961079BC7B6792BBE3A9014A /* ConnectionHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4641ED60BF98CCE0CBCA35A9 /* ConnectionHeader.swift */; };
 		961EE2BD116DA166FF43C8FB /* GoalCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28407FAC7AC7B30001505ED9 /* GoalCalculatorTests.swift */; };
+		978457D198932CAC91D5A9B5 /* Awards.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24FEC1927AD3004E8790C659 /* Awards.swift */; };
 		9B4789646250F91624D613E5 /* PairStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 060B40674C52C3525B24AC48 /* PairStep.swift */; };
+		9C6EB53CDBFB654809666C91 /* AwardsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B612E4A8CAB38DD14EC9513 /* AwardsView.swift */; };
 		9D16D7D4868DF7C52FCB272C /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = C81F90EB90D7EF2B73213454 /* Models.swift */; };
 		A8CA61F6B69DDA8BF0E011FA /* GoalPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F9954614A9C47ACB6069D5D /* GoalPicker.swift */; };
 		AFACD88360CE7A03E5AE978F /* GoalCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E50BD98E9EE28C657283C34C /* GoalCalculator.swift */; };
@@ -71,6 +74,7 @@
 		11E4E766722E42B686462BED /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		1AE79817CA19EF3725B21098 /* HydraCoaster.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HydraCoaster.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		24C4D3BC5354DB006B1CC2D4 /* SleepScheduleReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepScheduleReader.swift; sourceTree = "<group>"; };
+		24FEC1927AD3004E8790C659 /* Awards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Awards.swift; sourceTree = "<group>"; };
 		28407FAC7AC7B30001505ED9 /* GoalCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalCalculatorTests.swift; sourceTree = "<group>"; };
 		2896DC92CA10A88469838585 /* DailyTotals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyTotals.swift; sourceTree = "<group>"; };
 		2F1839894BBAC42EC180FFC7 /* RecalibrateReducer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecalibrateReducer.swift; sourceTree = "<group>"; };
@@ -87,7 +91,9 @@
 		61D2FF222701C4B05459E481 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		64F75460C5A1FFE782FEFA38 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		6720005A5A4E1C2E3C4F929D /* ConnectionDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionDebugView.swift; sourceTree = "<group>"; };
+		6B612E4A8CAB38DD14EC9513 /* AwardsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AwardsView.swift; sourceTree = "<group>"; };
 		6BB614A61B391F117469B9F8 /* CoasterProtocolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoasterProtocolTests.swift; sourceTree = "<group>"; };
+		6DFE8F026111C30E8F234361 /* AwardsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AwardsTests.swift; sourceTree = "<group>"; };
 		71CD8A3208C36C571BF46B13 /* HydraCoaster.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HydraCoaster.entitlements; sourceTree = "<group>"; };
 		7D6E157896B853E0B80BC01B /* DrinkTypeGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrinkTypeGrid.swift; sourceTree = "<group>"; };
 		842924407C5D1BCF494B7C55 /* HealthKitLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitLogger.swift; sourceTree = "<group>"; };
@@ -118,9 +124,18 @@
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		24663304E117B7E851237303 /* Awards */ = {
+			isa = PBXGroup;
+			children = (
+				6B612E4A8CAB38DD14EC9513 /* AwardsView.swift */,
+			);
+			path = Awards;
+			sourceTree = "<group>";
+		};
 		3E0439DB5D376871530DC53A /* HydraCoasterTests */ = {
 			isa = PBXGroup;
 			children = (
+				6DFE8F026111C30E8F234361 /* AwardsTests.swift */,
 				6BB614A61B391F117469B9F8 /* CoasterProtocolTests.swift */,
 				F8E347DBBB37C57594E361CD /* DailyTotalsTests.swift */,
 				E139C42C6535901D26EDB689 /* DrinkCatalogTests.swift */,
@@ -192,6 +207,7 @@
 			isa = PBXGroup;
 			children = (
 				B0AA61D842C9A46E947C779F /* AppServices.swift */,
+				24FEC1927AD3004E8790C659 /* Awards.swift */,
 				FBB0C6A12891D327CA8F0BF4 /* FocusStatusGate.swift */,
 				E50BD98E9EE28C657283C34C /* GoalCalculator.swift */,
 				842924407C5D1BCF494B7C55 /* HealthKitLogger.swift */,
@@ -234,6 +250,7 @@
 				71CD8A3208C36C571BF46B13 /* HydraCoaster.entitlements */,
 				11E4E766722E42B686462BED /* Info.plist */,
 				54725E2250A0A29AF9C5B9ED /* RootView.swift */,
+				24663304E117B7E851237303 /* Awards */,
 				6C299B23C733C3F1349F0DF3 /* Coaster */,
 				60F9763741F456EB915B1801 /* Data */,
 				E97265D8F3C2A29C24CBAF36 /* History */,
@@ -343,6 +360,8 @@
 			files = (
 				E40BEEE1E8DB3E3E6953CF0A /* App.swift in Sources */,
 				3A95D6DFD06645F14D90820B /* AppServices.swift in Sources */,
+				978457D198932CAC91D5A9B5 /* Awards.swift in Sources */,
+				9C6EB53CDBFB654809666C91 /* AwardsView.swift in Sources */,
 				BE11C3A3594555B1BA1AEF51 /* CoasterClient.swift in Sources */,
 				793A6D35ADE8461562F8BED1 /* CoasterProtocol.swift in Sources */,
 				F2A736AA50BBBF9041590DE7 /* ConnectionDebugView.swift in Sources */,
@@ -383,6 +402,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				16B8BEA9A6BE11C183CC0DB4 /* AwardsTests.swift in Sources */,
 				2AF58B096D93C557222D9683 /* CoasterProtocolTests.swift in Sources */,
 				CC4565DF184D257DE1E3E40C /* DailyTotalsTests.swift in Sources */,
 				7A0A83E64629458992A05763 /* DrinkCatalogTests.swift in Sources */,
