@@ -1,10 +1,15 @@
 import Charts
 import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 
-/// Last 14 days of intake: bar chart with a goal line, plus the sips for
-/// whichever day is selected (today by default). Pure bucketing math lives
-/// in DailyTotals so it's testable without SwiftData in the loop.
+/// Week/month range chart with a goal line, the per-drink breakdown, a
+/// 12-week heatmap, and CSV export (V2-T5), plus the sips for whichever day
+/// is selected on the chart (today by default). All the range/breakdown/
+/// heatmap math lives in Analytics, sourced from `AppServices.
+/// historySnapshot` rather than a local SwiftData query, so it's testable
+/// without SwiftData in the loop and never drifts from Awards' idea of a
+/// day's total.
 struct HistoryView: View {
     var appServices: AppServices
 
@@ -12,18 +17,22 @@ struct HistoryView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var settings: AppSettings?
     @State private var selectedDay: Date?
+    @State private var range: HistoryRange = .week
 
     private var goalML: Double { settings?.goalML ?? 2000 }
 
+    private var snapshot: HistorySnapshot { appServices.historySnapshot }
+
     private var totals: [DailyTotal] {
-        let records = allSips.map {
-            SipRecord(
-                seq: $0.seq, date: $0.date, grams: $0.grams, isEstimatedDate: $0.isEstimatedDate,
-                typeID: $0.typeID, hydrationFactor: $0.hydrationFactor, isManual: $0.isManual,
-                hkSampleUUID: $0.hkSampleUUID
-            )
-        }
-        return DailyTotals.compute(from: records)
+        Analytics.rangeTotals(days: snapshot.dailyTotals, range: range, endingOn: Date(), calendar: .current)
+    }
+
+    private var typeSlices: [TypeSlice] {
+        Analytics.typeBreakdown(sips: snapshot.sips, range: range, endingOn: Date(), calendar: .current)
+    }
+
+    private var heatmapWeeks: [[HeatmapCell?]] {
+        Analytics.heatmapWeeks(days: snapshot.dailyTotals, endingOn: Date(), calendar: .current, goalML: goalML)
     }
 
     private var displayedDay: Date {
@@ -47,7 +56,10 @@ struct HistoryView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
+                rangePicker
                 chart
+                TypeBreakdownSection(slices: typeSlices)
+                HeatmapSection(weeks: heatmapWeeks)
                 SipListSection(
                     sips: sipsForDisplayedDay,
                     title: sectionTitle,
@@ -59,14 +71,33 @@ struct HistoryView: View {
         }
         .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("History")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                ShareLink(
+                    item: CSVExport(makeCSV: { Analytics.csv(sips: snapshot.sips) }),
+                    preview: SharePreview("HydraCoaster-sips.csv")
+                ) {
+                    Label("Export", systemImage: "square.and.arrow.up")
+                }
+            }
+        }
         .task {
             settings = AppSettings.fetchOrCreate(in: modelContext)
         }
     }
 
+    private var rangePicker: some View {
+        Picker("Range", selection: $range) {
+            ForEach(HistoryRange.allCases, id: \.self) { option in
+                Text(option.label).tag(option)
+            }
+        }
+        .pickerStyle(.segmented)
+    }
+
     private var chart: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Last 14 days")
+            Text(range == .week ? "Last 7 days" : "Last 30 days")
                 .font(.headline)
 
             Chart {
@@ -87,8 +118,8 @@ struct HistoryView: View {
                     .foregroundStyle(.secondary)
             }
             .chartXAxis {
-                AxisMarks(values: .stride(by: .day)) { _ in
-                    AxisValueLabel(format: .dateTime.weekday(.narrow))
+                AxisMarks(values: .stride(by: range == .week ? .day : .weekOfYear)) { _ in
+                    AxisValueLabel(format: range == .week ? .dateTime.weekday(.narrow) : .dateTime.month(.abbreviated).day())
                 }
             }
             .chartYAxis {
@@ -106,6 +137,21 @@ struct HistoryView: View {
         }
         .padding(20)
         .background(.thickMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+    }
+}
+
+/// Lazy CSV payload for the toolbar ShareLink: the string (and its bytes)
+/// only materialize when the user actually shares, keeping `Analytics.csv`
+/// out of HistoryView's render path — no temp files, no I/O per body
+/// evaluation.
+struct CSVExport: Transferable {
+    let makeCSV: () -> String
+
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(exportedContentType: .commaSeparatedText) { export in
+            Data(export.makeCSV().utf8)
+        }
+        .suggestedFileName("HydraCoaster-sips.csv")
     }
 }
 

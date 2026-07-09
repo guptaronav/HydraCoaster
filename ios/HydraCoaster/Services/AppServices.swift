@@ -25,6 +25,17 @@ struct AwardsSnapshot {
     let badges: [String: Date]
 }
 
+/// Read-only snapshot for the History tab's analytics (V2-T5): range
+/// charts, the per-drink breakdown, the heatmap, and CSV export all read
+/// from this rather than querying SwiftData directly, same reasoning as
+/// `AwardsSnapshot`. `dailyTotals` is the FULL, unwindowed history (via
+/// `Awards.dailyTotals`) — History's own range/heatmap trimming happens in
+/// `Analytics`, not here.
+struct HistorySnapshot {
+    let sips: [SipRecord]
+    let dailyTotals: [DailyTotal]
+}
+
 /// T6's single composition point: wires SyncEngine's sip stream and
 /// CoasterClient's connection state to HealthKit logging, weather-adjusted
 /// D005 writes, and the mirrored reminder notification. Nothing outside
@@ -187,6 +198,12 @@ final class AppServices {
             longestStreak: Awards.longestStreak(days: days, goalML: goal, calendar: calendar),
             badges: Awards.earnedBadges(sips: sips, days: days, goalML: goal, calendar: calendar)
         )
+    }
+
+    /// Sips + full day bucketing for the History tab (V2-T5), built from
+    /// the same in-memory sip mirror `awardsSnapshot` uses.
+    var historySnapshot: HistorySnapshot {
+        HistorySnapshot(sips: sips, dailyTotals: Awards.dailyTotals(from: sips))
     }
 
     private func handleNewSip(_ record: SipRecord) {
