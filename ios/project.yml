@@ -15,6 +15,8 @@ targets:
     info:
       path: HydraCoaster/Info.plist
       properties:
+        CFBundleShortVersionString: "2.0"
+        CFBundleVersion: "2"
         UILaunchScreen: {}
         NSBluetoothAlwaysUsageDescription: "HydraCoaster uses Bluetooth to connect to your coaster and track your sips."
         NSHealthUpdateUsageDescription: "HydraCoaster logs each sip as water intake in Health."
@@ -57,6 +59,8 @@ targets:
     info:
       path: HydraWidget/Info.plist
       properties:
+        CFBundleShortVersionString: "2.0"
+        CFBundleVersion: "2"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     entitlements:
