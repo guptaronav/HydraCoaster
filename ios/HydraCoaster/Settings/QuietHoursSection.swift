@@ -33,7 +33,7 @@ struct QuietHoursSection: View {
 
             modeDetail
 
-            if focusAuthStatus != .restricted {
+            if FocusStatusGate.isSupported, focusAuthStatus != .restricted {
                 Toggle("Respect Focus", isOn: respectFocusBinding)
             }
         } header: {
@@ -66,7 +66,7 @@ struct QuietHoursSection: View {
 
     private var footerText: String {
         var lines = ["The coaster stays silent during quiet hours; reminders resume once the window ends."]
-        if focusAuthStatus != .restricted {
+        if FocusStatusGate.isSupported, focusAuthStatus != .restricted {
             lines.append("iOS already hides notifications during Focus; this also stops HydraCoaster from scheduling them. The coaster still buzzes.")
         }
         return lines.joined(separator: " ")

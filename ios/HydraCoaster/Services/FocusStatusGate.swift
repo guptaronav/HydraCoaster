@@ -13,6 +13,14 @@ import os
 enum FocusStatusGate {
     private static let logger = Logger(subsystem: "com.ronav.HydraCoaster", category: "FocusStatusGate")
 
+    /// The `com.apple.developer.focus-status` entitlement had to be dropped
+    /// from the build — a free personal-team provisioning profile can't
+    /// carry it, and without the entitlement the Focus API only ever answers
+    /// "not authorized". False hides the Settings toggle entirely; flip back
+    /// to true (and restore the entitlement in project.yml + the app
+    /// .entitlements) if the project moves to a paid developer account.
+    static let isSupported = false
+
     static var authorizationStatus: INFocusStatusAuthorizationStatus {
         INFocusStatusCenter.default.authorizationStatus
     }
