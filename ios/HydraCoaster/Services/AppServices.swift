@@ -115,6 +115,13 @@ final class AppServices {
     /// writes that field, funneled through a closure for the same reason
     /// `saveSleepDerivedWindow` is.
     private let saveCelebratedDay: (Date) -> Void
+    /// Celebration sent, awaiting the coaster's D008 `{0x05, ok}` before the
+    /// day is recorded (V3). Saving on send burned the once-per-day slot
+    /// even when the coaster rejected the command — a coaster on pre-0x05
+    /// firmware answered "bad command", played nothing, and the app still
+    /// wrote the day, so it never retried. Cleared on a bad/lost reply so
+    /// the next sip that still satisfies the crossing re-sends.
+    private var pendingCelebrationDay: Date?
 
     init(
         client: CoasterClient,
@@ -167,6 +174,7 @@ final class AppServices {
         }
 
         watchConnection()
+        watchCommandStatus()
         rescheduleReminder() // once at app start, from stored sips
         writeWidgetStateAndReload() // once at app start, so the widget isn't stale before the first sip
         Task { @MainActor [weak self] in await self?.refreshSleepDerivedWindowIfNeeded() }
@@ -260,12 +268,15 @@ final class AppServices {
     /// every new sip and after reclassify, since both can move today's total
     /// across the line.
     ///
-    /// Only celebrates (and records the day) while connected: a crossing
-    /// that happens while disconnected is simply missed, with no catch-up
-    /// once the coaster reconnects later that day. Keeps this a fire-once
-    /// side effect of the moment of crossing rather than a queued/retried one.
+    /// Only celebrates while connected: a crossing that happens while
+    /// disconnected is picked up by the next connected sip (including a
+    /// backfilled one) that still satisfies the crossing check.
+    ///
+    /// The day is NOT recorded here — that waits for the coaster's D008
+    /// confirmation (see `handleCommandStatus`), so a rejected or lost
+    /// command doesn't burn the once-per-day slot with nothing played.
     private func maybeCelebrate() {
-        guard client.isConnected else { return }
+        guard client.isConnected, pendingCelebrationDay == nil else { return }
         let now = Date()
         let consumedToday = sips
             .filter { Calendar.current.isDateInToday($0.date) }
@@ -277,7 +288,20 @@ final class AppServices {
             now: now
         ) else { return }
         client.sendCommand(.celebrate)
-        saveCelebratedDay(now)
+        pendingCelebrationDay = now
+    }
+
+    /// D008 reply for the in-flight celebration: `{0x05, ok}` records the
+    /// day; any other 0x05 result drops the pending marker so a later sip
+    /// retries. Replies for other commands (buzz test, tare) are ignored.
+    private func handleCommandStatus() {
+        guard let pending = pendingCelebrationDay,
+              let status = client.lastCommandStatus,
+              status.lastCommand == 0x05 else { return }
+        pendingCelebrationDay = nil
+        if status.result == .ok {
+            saveCelebratedDay(pending)
+        }
     }
 
     /// Snapshots today's consumption/streak/theme into the App Group and
@@ -412,9 +436,22 @@ final class AppServices {
         }
     }
 
+    /// Same re-arm pattern as `watchConnection`, for D008 replies.
+    private func watchCommandStatus() {
+        withObservationTracking {
+            _ = client.lastCommandStatus
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                self?.handleCommandStatus()
+                self?.watchCommandStatus()
+            }
+        }
+    }
+
     private func handleConnectionChange() {
         guard client.connectionState == .connected else {
             weatherService.stop()
+            pendingCelebrationDay = nil // reply lost with the link — next sip retries
             return
         }
         weatherService.start() // fetches immediately, then every 30 min
