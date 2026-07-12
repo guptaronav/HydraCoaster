@@ -180,9 +180,16 @@ extension CoasterClient: CBCentralManagerDelegate {
         connect(to: peripheral)
     }
 
+    /// Stays `.connecting` here on purpose: `.connected` means "writes will
+    /// land" to everything observing it (SyncEngine's backfill request,
+    /// AppServices' quiet-window/interval writes), and the characteristics
+    /// map is still empty until discovery completes. Flipping state at this
+    /// point sent every connect-triggered write into `write()`'s
+    /// characteristic-unavailable drop — reconnect backfill silently never
+    /// happened (found via v3 bug report, 2026-07-12). The flip now lives in
+    /// didDiscoverCharacteristicsFor.
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-        logger.info("connected: \(peripheral.identifier)")
-        connectionState = .connected
+        logger.info("connected: \(peripheral.identifier), discovering services")
         UserDefaults.standard.set(peripheral.identifier.uuidString, forKey: Self.knownPeripheralKey)
         characteristics.removeAll()
         peripheral.discoverServices([GATT.service, GATT.batteryService])
@@ -214,8 +221,9 @@ extension CoasterClient: CBCentralManagerDelegate {
         if peripheral.state == .connected {
             // didConnect never fires for an already-connected peripheral, so
             // rediscover here: the normal discovery path repopulates the
-            // characteristics map, re-arms notifies, and re-writes time.
-            connectionState = .connected
+            // characteristics map, re-arms notifies, re-writes time, and
+            // flips state to .connected once writes can actually land.
+            connectionState = .connecting
             characteristics.removeAll()
             peripheral.discoverServices([GATT.service, GATT.batteryService])
         } else {
@@ -236,6 +244,7 @@ extension CoasterClient: CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         guard error == nil, let services = peripheral.services else {
             logger.error("service discovery failed: \(error?.localizedDescription ?? "unknown")")
+            disconnect() // didDisconnect -> attemptReconnect, cleaner than a half-usable link
             return
         }
         for service in services {
@@ -246,6 +255,7 @@ extension CoasterClient: CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         guard error == nil, let chars = service.characteristics else {
             logger.error("characteristic discovery failed: \(error?.localizedDescription ?? "unknown")")
+            disconnect()
             return
         }
         for characteristic in chars {
@@ -256,6 +266,11 @@ extension CoasterClient: CBPeripheralDelegate {
         }
         if service.uuid == GATT.service {
             writeTime()
+            // Only now is the link usable: every observer of `.connected`
+            // (backfill request, quiet-window write) fires against a
+            // populated characteristics map. Battery-service discovery may
+            // still be in flight — it has no writes, so nothing waits on it.
+            connectionState = .connected
         }
     }
 
