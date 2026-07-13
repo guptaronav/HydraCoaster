@@ -4,3 +4,4 @@
 include/secrets.h
 __pycache__/
 ios/screenshots/
+DEVLOG.md
