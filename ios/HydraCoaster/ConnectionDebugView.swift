@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// Placeholder debug screen for T3. Real design lands in T4/T5 — this is
@@ -7,8 +8,10 @@ struct ConnectionDebugView: View {
     var syncEngine: SyncEngine
     var appServices: AppServices
     @Environment(WeatherService.self) private var weather
+    @Environment(\.modelContext) private var modelContext
     @State private var confirmingReset = false
     @State private var awaitingResetAck = false
+    @State private var lastCelebratedDay: Date?
 
     var body: some View {
         List {
@@ -58,6 +61,31 @@ struct ConnectionDebugView: View {
                 }
             }
 
+            // Celebration triage (V3): "Test Celebration" fires 0x05 directly,
+            // bypassing the app's decision logic — flourish plays = firmware +
+            // prefs are fine, so a missed real celebration means the day was
+            // already recorded or the app wasn't connected at the crossing.
+            // Watch "Last Command" above for the coaster's verdict.
+            Section("Celebration") {
+                LabeledContent(
+                    "Celebrated Day",
+                    value: lastCelebratedDay.map { $0.formatted(date: .abbreviated, time: .shortened) } ?? "never"
+                )
+
+                Button("Test Celebration") {
+                    client.sendCommand(.celebrate)
+                }
+                .disabled(client.connectionState != .connected)
+
+                Button("Clear Celebrated Day", role: .destructive) {
+                    let settings = AppSettings.fetchOrCreate(in: modelContext)
+                    settings.lastCelebratedDay = nil
+                    try? modelContext.save()
+                    appServices.debugClearPendingCelebration()
+                    lastCelebratedDay = nil
+                }
+            }
+
             Section("Commands") {
                 Button("Buzz Test") {
                     client.sendCommand(.buzz)
@@ -77,6 +105,9 @@ struct ConnectionDebugView: View {
             }
         }
         .navigationTitle("HydraCoaster")
+        .onAppear {
+            lastCelebratedDay = AppSettings.fetchOrCreate(in: modelContext).lastCelebratedDay
+        }
         .confirmationDialog(
             "Delete all sip history?",
             isPresented: $confirmingReset,

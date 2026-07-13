@@ -457,7 +457,19 @@ final class AppServices {
         weatherService.start() // fetches immediately, then every 30 min
         writeQuietWindow() // next to the interval write — see writeQuietWindow's callers
         rescheduleReminder()
+        // Catch-up crossing (V3): if the goal was finished away from the
+        // coaster (manual logs, or sips synced elsewhere), no later sip may
+        // arrive to re-trigger the check — celebrate on reconnect instead.
+        maybeCelebrate()
     }
+
+    #if DEBUG
+    /// Debug panel only: unblocks a celebration whose D008 reply was lost
+    /// without disconnecting (pending is normally cleared on disconnect).
+    func debugClearPendingCelebration() {
+        pendingCelebrationDay = nil
+    }
+    #endif
 
     private func rescheduleReminder() {
         guard isRemindEnabled() else {
