@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var showRecalibrate = false
     @State private var showPersonalize = false
     @State private var buzzConfirmed = false
+    @State private var celebrateConfirmed = false
 
     private var isConnected: Bool { client.connectionState == .connected }
 
@@ -89,6 +90,22 @@ struct SettingsView: View {
                     }
                 }
 
+                // Unlike Buzz Test, this respects the Sound/Light toggles
+                // above — both off means the coaster accepts (checkmark)
+                // but stays silent and dark, same as a real celebration.
+                Button {
+                    client.sendCommand(.celebrate)
+                } label: {
+                    HStack {
+                        Text("Celebration Test")
+                        if celebrateConfirmed {
+                            Spacer()
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(theme.accent)
+                        }
+                    }
+                }
+
                 Button("Recalibrate…") { showRecalibrate = true }
             } header: {
                 Text("Coaster")
@@ -132,11 +149,22 @@ struct SettingsView: View {
             if newValue == .connected { writePrefsToDevice() }
         }
         .onChange(of: client.lastCommandStatus) { _, status in
-            guard status?.lastCommand == 0x01, status?.result == .ok else { return }
-            buzzConfirmed = true
-            Task {
-                try? await Task.sleep(for: .seconds(2))
-                buzzConfirmed = false
+            guard let status, status.result == .ok else { return }
+            switch status.lastCommand {
+            case 0x01:
+                buzzConfirmed = true
+                Task {
+                    try? await Task.sleep(for: .seconds(2))
+                    buzzConfirmed = false
+                }
+            case 0x05:
+                celebrateConfirmed = true
+                Task {
+                    try? await Task.sleep(for: .seconds(2))
+                    celebrateConfirmed = false
+                }
+            default:
+                break
             }
         }
     }

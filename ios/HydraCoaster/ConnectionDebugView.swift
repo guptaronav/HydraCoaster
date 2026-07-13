@@ -61,21 +61,14 @@ struct ConnectionDebugView: View {
                 }
             }
 
-            // Celebration triage (V3): "Test Celebration" fires 0x05 directly,
-            // bypassing the app's decision logic — flourish plays = firmware +
-            // prefs are fine, so a missed real celebration means the day was
-            // already recorded or the app wasn't connected at the crossing.
-            // Watch "Last Command" above for the coaster's verdict.
+            // Celebration triage (V3): the celebrated-day record decides
+            // whether a real crossing may fire — clear it to re-test today.
+            // The test button itself lives with the other commands below.
             Section("Celebration") {
                 LabeledContent(
                     "Celebrated Day",
                     value: lastCelebratedDay.map { $0.formatted(date: .abbreviated, time: .shortened) } ?? "never"
                 )
-
-                Button("Test Celebration") {
-                    client.sendCommand(.celebrate)
-                }
-                .disabled(client.connectionState != .connected)
 
                 Button("Clear Celebrated Day", role: .destructive) {
                     let settings = AppSettings.fetchOrCreate(in: modelContext)
@@ -89,6 +82,16 @@ struct ConnectionDebugView: View {
             Section("Commands") {
                 Button("Buzz Test") {
                     client.sendCommand(.buzz)
+                }
+                .disabled(client.connectionState != .connected)
+
+                // Fires 0x05 directly, bypassing the app's decision logic —
+                // flourish plays = firmware + prefs are fine, so a missed
+                // real celebration means the day was already recorded or the
+                // app wasn't connected at the crossing. Watch "Last Command"
+                // above for the coaster's verdict.
+                Button("Celebration Test") {
+                    client.sendCommand(.celebrate)
                 }
                 .disabled(client.connectionState != .connected)
 
