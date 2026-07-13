@@ -74,6 +74,14 @@ struct HydraCoasterApp: App {
                 services.reclassify(seq: seq, to: DrinkCatalog.drink(for: "coffee.latte"))
             }
         }
+        // Screenshot aid only: `HC_SEED_GOAL_DONE=1` logs one water sip just
+        // past the base goal, so the gate can capture the V3 gradient ring
+        // at 100% with its goal-reached sparkle without simulating a day of
+        // drinking.
+        if ProcessInfo.processInfo.environment["HC_SEED_GOAL_DONE"] == "1" {
+            let goal = AppSettings.fetchOrCreate(in: context).goalML
+            engine.logManualSip(drink: DrinkCatalog.water, grams: goal + 50)
+        }
         // Screenshot aid only: `HC_QUIET_MODE=0|1|2` pre-sets Quiet Hours'
         // mode so the gate can capture Off/Manual/Sleep without simulating
         // the segmented control — this only sets the stored mode, it never
