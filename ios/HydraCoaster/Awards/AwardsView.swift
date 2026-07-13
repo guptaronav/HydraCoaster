@@ -8,6 +8,9 @@ struct AwardsView: View {
     var appServices: AppServices
 
     @Environment(\.hydraTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Drives the one-time staggered entrance of the badge grid.
+    @State private var hasAppeared = false
 
     private static let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -27,6 +30,7 @@ struct AwardsView: View {
         }
         .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("Awards")
+        .onAppear { hasAppeared = true }
     }
 
     private func header(_ snapshot: AwardsSnapshot) -> some View {
@@ -38,13 +42,21 @@ struct AwardsView: View {
     }
 
     private func statTile(icon: String, value: Int, label: String) -> some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 8) {
             Image(systemName: icon)
+                .font(.callout)
                 .foregroundStyle(theme.accent)
+                .symbolEffect(.bounce, value: value) // nudge when the number moves
+                .frame(width: 34, height: 34)
+                .background(
+                    theme.accent.opacity(0.14),
+                    in: Circle()
+                )
             Text(value, format: .number)
                 .font(.system(size: 28, weight: .bold, design: .rounded))
                 .monospacedDigit()
                 .contentTransition(.numericText(value: Double(value)))
+                .animation(.snappy(duration: 0.4), value: value)
             Text(label)
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -62,8 +74,17 @@ struct AwardsView: View {
                 .padding(.horizontal, 4)
 
             LazyVGrid(columns: Self.columns, spacing: 12) {
-                ForEach(Awards.catalog) { badge in
+                ForEach(Array(Awards.catalog.enumerated()), id: \.element.id) { index, badge in
                     badgeTile(badge, earnedDate: snapshot.badges[badge.id])
+                        .opacity(hasAppeared ? 1 : 0)
+                        .scaleEffect(hasAppeared ? 1 : 0.85)
+                        // Cascading spring on first appear; nil under Reduce
+                        // Motion so the tiles simply snap visible.
+                        .animation(
+                            reduceMotion ? nil : .spring(response: 0.45, dampingFraction: 0.75)
+                                .delay(Double(index) * 0.04),
+                            value: hasAppeared
+                        )
                 }
             }
         }
@@ -76,6 +97,7 @@ struct AwardsView: View {
                 .font(.title2)
                 .foregroundStyle(isEarned ? theme.accent : .secondary)
                 .opacity(isEarned ? 1 : 0.4)
+                .symbolEffect(.bounce, value: isEarned) // pops the moment it's earned
 
             Text(badge.name)
                 .font(.caption.weight(.semibold))
@@ -91,9 +113,32 @@ struct AwardsView: View {
         .frame(maxWidth: .infinity, minHeight: 108)
         .padding(.vertical, 14)
         .padding(.horizontal, 6)
-        .background(.thickMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(badgeBackground(isEarned: isEarned))
         .opacity(isEarned ? 1 : 0.6)
         .accessibilityElement(children: .combine)
+    }
+
+    /// Earned badges sit on an accent-washed card with a hairline accent
+    /// border so they read as trophies; locked ones stay quiet material.
+    @ViewBuilder
+    private func badgeBackground(isEarned: Bool) -> some View {
+        if isEarned {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [theme.accent.opacity(0.22), theme.accent.opacity(0.06)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(theme.accent.opacity(0.35), lineWidth: 1)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(.thickMaterial)
+        }
     }
 }
 

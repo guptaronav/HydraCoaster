@@ -115,12 +115,17 @@ struct TodayView: View {
     }
 
     private func streakChip(days: Int) -> some View {
-        Label("\(days) day streak", systemImage: "flame.fill")
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(theme.accent)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .background(theme.accent.opacity(0.12), in: Capsule())
-            .padding(.top, 2)
+        Label {
+            Text("\(days) day streak")
+        } icon: {
+            Image(systemName: "flame.fill")
+                .symbolEffect(.bounce, value: days) // flares when the streak grows
+        }
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(theme.accent)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 4)
+        .background(theme.accent.opacity(0.12), in: Capsule())
+        .padding(.top, 2)
     }
 }

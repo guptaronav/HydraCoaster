@@ -8,16 +8,29 @@ struct GoalRingView: View {
     let goalML: Double
 
     @Environment(\.hydraTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ScaledMetric(relativeTo: .largeTitle) private var diameter: CGFloat = 232
     @ScaledMetric(relativeTo: .largeTitle) private var lineWidth: CGFloat = 20
     @ScaledMetric(relativeTo: .largeTitle) private var numberSize: CGFloat = 52
+    /// One-shot scale pulse the moment the ring first fills (V3 polish) —
+    /// the on-phone echo of the coaster's celebration flourish.
+    @State private var goalPulse = false
 
     private var progress: Double {
         guard goalML > 0 else { return 0 }
         return min(consumedML / goalML, 1.0)
     }
 
-    private var isOverGoal: Bool { goalML > 0 && consumedML > goalML }
+    private var isOverGoal: Bool { goalML > 0 && consumedML >= goalML }
+
+    /// First and last stops match so the ends meet seamlessly at 100%; the
+    /// lighter mid-sweep gives the arc a liquid sheen instead of flat ink.
+    private var ringGradient: AngularGradient {
+        AngularGradient(
+            colors: [theme.accent, theme.accent.opacity(0.65), theme.accent],
+            center: .center
+        )
+    }
 
     var body: some View {
         ZStack {
@@ -28,30 +41,41 @@ struct GoalRingView: View {
 
             Circle()
                 .trim(from: 0, to: progress)
-                .stroke(theme.accent, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .stroke(ringGradient, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-                .animation(.easeOut(duration: 0.6), value: progress)
+                .animation(.spring(response: 0.7, dampingFraction: 0.8), value: progress)
 
             VStack(spacing: 6) {
                 Text(Int(consumedML.rounded()), format: .number)
                     .font(.system(size: numberSize, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .contentTransition(.numericText(value: consumedML))
+                    .animation(.snappy(duration: 0.4), value: consumedML)
 
                 Text("of \(Int(goalML)) ml")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
                 if isOverGoal {
-                    Text("goal reached")
+                    Label("goal reached", systemImage: "sparkles")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(theme.accent)
                         .padding(.top, 2)
+                        .transition(.scale(scale: 0.5).combined(with: .opacity))
                 }
             }
-            .animation(.easeOut(duration: 0.3), value: isOverGoal)
+            .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isOverGoal)
         }
         .frame(width: diameter, height: diameter)
+        .scaleEffect(goalPulse ? 1.05 : 1)
+        .onChange(of: isOverGoal) { _, reached in
+            guard reached, !reduceMotion else { return }
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) { goalPulse = true }
+            Task {
+                try? await Task.sleep(for: .milliseconds(350))
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) { goalPulse = false }
+            }
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Today's water")
         .accessibilityValue("\(Int(consumedML)) of \(Int(goalML)) milliliters")
