@@ -68,3 +68,61 @@ Social challenges and leaderboards (needs accounts, a backend, and push),
 a watch app (big lift), and Fitbit/Withings/Health Connect (different
 ecosystems). The social bits get revisited if this ever gets CloudKit and a
 paid account.
+
+---
+
+## 2026-07-12 — v3: the party always arrives
+
+V2 taught the coaster to celebrate with you. V3 makes sure the celebration
+actually shows up — and gives the whole app a pulse while it's at it.
+
+### The party always arrives
+
+Shipping a celebration and reliably delivering one turn out to be different
+problems. V2 marked your once-a-day celebration as used the moment the phone
+sent the command — so if the coaster rejected it or the reply got lost in the
+air, the day burned with nothing played, and it never retried. Now the day is
+only recorded when the coaster confirms the flourish actually ran; a bad or
+lost reply clears the pending marker and the next qualifying sip simply sends
+it again.
+
+Crossing 100% away from the coaster counts too. Log a glass at a restaurant,
+walk in the door, and the celebration fires the moment the coaster reconnects
+— no waiting for another sip. Amber pulses and ascending chirps, right on cue.
+
+### No more vanishing sips
+
+The nastiest bug of the release: the app called itself "connected" the
+instant Bluetooth linked, before it had discovered where writes actually go.
+Everything that fires on connect — including the request for sips the coaster
+logged while your phone was away — hit a not-ready guard and was silently
+dropped. Offline sips just never backfilled. "Connected" now means
+ready-to-write, and a failed discovery disconnects for a clean retry. Every
+phone-free sip lands in your history on the next reconnect, every time.
+
+### A ring with a pulse
+
+The Today ring traded flat ink for an angular gradient with a liquid sheen,
+progress moves on a spring, and the first time it fills each day it does a
+quick scale pulse and pins a sparkly "goal reached" under the number — the
+on-phone echo of the coaster's flourish. The streak flame bounces when your
+streak grows. The Awards tab got tinted icon circles on the stat tiles,
+earned badges on accent-washed gradient cards, badge symbols that bounce when
+unlocked, and a cascading entrance. Turn on Reduce Motion and all of it
+politely sits still.
+
+### Push to party
+
+A Celebration Test button now lives in Settings, right under Buzz Test.
+Unlike Buzz Test, it respects your Sound and Light toggles, so it exercises
+the exact path a real goal celebration takes. A checkmark plus silence means
+your toggles are off — not that something's broken.
+
+### Verified
+
+- Simulator test suite green; celebration-confirmation and reconnect paths
+  exercised end-to-end against the physical coaster after an OTA flash.
+- Fresh goal-reached screenshots captured in both themes
+  (`ios/screenshots/today-goal-reached-*.png`, local only — screenshots are
+  gitignored).
+- App version bumped to 3.0.
